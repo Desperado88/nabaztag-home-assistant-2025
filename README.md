@@ -1,9 +1,9 @@
-Follow the istructions on this page to set up a new Nabaztag/tag serverless firmware:
+Follow the instructions on this page to set up a new Nabaztag/tag serverless firmware:
 
 GitHub source :
   https://github.com/andreax79/ServerlessNabaztag/tree/main
 
-A firmware allowing controling the Nabaztag/tag directly via web, without an external server - andreax79/ServerlessNabaztag
+A firmware allowing controlling the Nabaztag/tag directly via web, without an external server - andreax79/ServerlessNabaztag
 Just remember that you can use your Raspberry Pi as host for this firmware files (just create a folder named "www" in the config folder and put the "vl" directory right there).
 After installing this new firmware, it will be possible to control the rabbit using the Home Assistant user interface:
 ![FireShot Capture 4 - Home Assistant - https___maxhassio duckdns org_states_group tab_nabaztag](https://github.com/user-attachments/assets/76396d13-a4cb-4041-aa77-7e3cd82eb915)
@@ -13,10 +13,15 @@ If you don't know how to use a package have a look here: https://home-assistant.
 homeassistant:
   packages: !include_dir_named packages
 
-The gide for use WPA2 wifi (in french) :
+Change the violet platform in the Nabaztag parameters with:
+[your-hassio-ip]/vl
+ex:
+192.168.0.12/vl
+
+The guide for using WPA2 wifi (in french):
   https://nabaztag.forumactif.fr/t15437-guide-ressusciter-son-nabaztagtag-v2-avec-upgrade-en-wpa-2-et-openjabnab
 
-source : https://community.home-assistant.io/t/nabaztag-tag-the-smart-rabbit-is-back/41696
+source: https://community.home-assistant.io/t/nabaztag-tag-the-smart-rabbit-is-back/41696
 
 ---
 
@@ -37,7 +42,12 @@ Si vous ne savez pas comment utiliser un package, consultez ici : https://home-a
 homeassistant:
   packages: !include_dir_named packages
 
-Le gide pour mettre à jour votre Nabaztag:tag pour utiliser le WPA2 :
+Changer la plateforme violette dans les paramètres de Nabaztag avec :
+[votre-hassio-ip]/vl
+ex :
+192.168.0.12/vl
+
+Le guide pour mettre à jour votre Nabaztag:tag pour utiliser le WPA2 :
   https://nabaztag.forumactif.fr/t15437-guide-ressusciter-son-nabaztagtag-v2-avec-upgrade-en-wpa-2-et-openjabnab
 
 source : https://community.home-assistant.io/t/nabaztag-tag-the-smart-rabbit-is-back/41696
