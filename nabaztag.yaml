@@ -22,6 +22,36 @@
 #      - group.nabaztag_locale_setup                                          #
 #                                                                             #
 #------------------------------------------------------------------------------
+input_text:
+#------------------------------------------------------------------------------
+  nabaztag_ip_address:
+    name: Nabaztag Ip Address
+    initial: http://192.168.1.xxx/ # Indiquer ici l'ip du nabaztag
+  nabaztag_tts_language:
+    name: Nabaztag Tts Language
+    initial: fr # Changer la langue si besoin
+  nabaztag_radio_1_ip_address:
+    name: Nabaztag Radio 1 Ip Address
+    initial: http://37.247.50.30/MC2.mp3
+  nabaztag_radio_2_ip_address:
+    name: Nabaztag Radio 2 Ip Address
+    initial: http://icecast.vrtcdn.be/mnm_hits-high.mp3
+  nabaztag_radio_3_ip_address:
+    name: Nabaztag Radio 3 Ip Address
+    initial: http://shoutcast.rtl.it:3010/stream/1/
+  nabaztag_radio_4_ip_address:
+    name: Nabaztag Radio 4 Ip Address
+    initial: http://shoutcast.rtl.it:3010/stream/1/
+  nabaztag_radio_5_ip_address:
+    name: Nabaztag Radio 5 Ip Address
+    initial: http://shoutcast.rtl.it:3010/stream/1/
+  nabaztag_voice:
+    name: TTS
+    initial: Say Something...
+    min: 1
+    max: 500
+    pattern: '[a-fA-F0-9]*'
+#------------------------------------------------------------------------------
 sensor:
 #------------------------------------------------------------------------------
 # Weather Sensor
@@ -97,36 +127,6 @@ sensor:
 #      - allergy_index_tomorrow
 #      - allergy_index_yesterday
 #      - disease_average_forecasted
-#------------------------------------------------------------------------------
-input_text:
-#------------------------------------------------------------------------------
-  nabaztag_ip_address:
-    name: Nabaztag Ip Address
-    initial: http://192.168.1.81/
-  nabaztag_tts_language:
-    name: Nabaztag Tts Language
-    initial: fr
-  nabaztag_radio_1_ip_address:
-    name: Nabaztag Radio 1 Ip Address
-    initial: http://37.247.50.30/MC2.mp3
-  nabaztag_radio_2_ip_address:
-    name: Nabaztag Radio 2 Ip Address
-    initial: http://icecast.vrtcdn.be/mnm_hits-high.mp3
-  nabaztag_radio_3_ip_address:
-    name: Nabaztag Radio 3 Ip Address
-    initial: http://shoutcast.rtl.it:3010/stream/1/
-  nabaztag_radio_4_ip_address:
-    name: Nabaztag Radio 4 Ip Address
-    initial: http://shoutcast.rtl.it:3010/stream/1/
-  nabaztag_radio_5_ip_address:
-    name: Nabaztag Radio 5 Ip Address
-    initial: http://shoutcast.rtl.it:3010/stream/1/
-  nabaztag_voice:
-    name: TTS
-    initial: Say Something...
-    min: 1
-    max: 500
-    pattern: '[a-fA-F0-9]*'
 #------------------------------------------------------------------------------
 group:
 #------------------------------------------------------------------------------

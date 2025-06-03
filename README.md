@@ -13,6 +13,8 @@ If you don't know how to use a package have a look here: https://home-assistant.
 homeassistant:
   packages: !include_dir_named packages
 
+The gide for use WPA2 wifi (in french) :
+  https://nabaztag.forumactif.fr/t15437-guide-ressusciter-son-nabaztagtag-v2-avec-upgrade-en-wpa-2-et-openjabnab
 
 source : https://community.home-assistant.io/t/nabaztag-tag-the-smart-rabbit-is-back/41696
 
@@ -35,5 +37,7 @@ Si vous ne savez pas comment utiliser un package, consultez ici : https://home-a
 homeassistant:
   packages: !include_dir_named packages
 
+Le gide pour mettre à jour votre Nabaztag:tag pour utiliser le WPA2 :
+  https://nabaztag.forumactif.fr/t15437-guide-ressusciter-son-nabaztagtag-v2-avec-upgrade-en-wpa-2-et-openjabnab
 
 source : https://community.home-assistant.io/t/nabaztag-tag-the-smart-rabbit-is-back/41696
