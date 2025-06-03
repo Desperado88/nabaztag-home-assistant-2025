@@ -105,7 +105,7 @@ input_text:
     initial: http://192.168.1.81/
   nabaztag_tts_language:
     name: Nabaztag Tts Language
-    initial: it
+    initial: fr
   nabaztag_radio_1_ip_address:
     name: Nabaztag Radio 1 Ip Address
     initial: http://37.247.50.30/MC2.mp3
