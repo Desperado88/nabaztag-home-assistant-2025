@@ -14,9 +14,9 @@ homeassistant:
   packages: !include_dir_named packages
 
 Change the violet platform in the Nabaztag parameters with:
-[your-hassio-ip]/vl
+[your-hassio-ip]:8123/local/vl/
 ex:
-192.168.0.12/vl
+192.168.0.100:8123/local/vl/
 
 The guide for using WPA2 wifi (in french):
   https://nabaztag.forumactif.fr/t15437-guide-ressusciter-son-nabaztagtag-v2-avec-upgrade-en-wpa-2-et-openjabnab
@@ -43,9 +43,9 @@ homeassistant:
   packages: !include_dir_named packages
 
 Changer la plateforme violette dans les paramètres de Nabaztag avec :
-[votre-hassio-ip]/vl
-ex :
-192.168.0.12/vl
+[votre-hassio-ip]:8123/local/vl/
+ex:
+192.168.0.100:8123/local/vl/
 
 Le guide pour mettre à jour votre Nabaztag:tag pour utiliser le WPA2 :
   https://nabaztag.forumactif.fr/t15437-guide-ressusciter-son-nabaztagtag-v2-avec-upgrade-en-wpa-2-et-openjabnab
