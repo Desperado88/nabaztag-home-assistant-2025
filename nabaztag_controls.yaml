@@ -1,0 +1,279 @@
+###############################################################################
+#                                                                             #
+#                        NABAZTAG PACKAGE SIMPLIFIÉ                           #
+#                         Compatible Home Assistant 2025                      #
+#                                                                             #
+###############################################################################
+# Configuration simplifiée pour contrôles de base du Nabaztag                #
+# - Position des oreilles                                                    #
+# - Couleur des LEDs                                                         #
+# - Contrôle ON/OFF des LEDs                                                 #
+# - Text-to-Speech (TTS)                                                     #
+###############################################################################
+
+#------------------------------------------------------------------------------
+# CONFIGURATION DE BASE
+#------------------------------------------------------------------------------
+input_text:
+  nabaztag_ip_address:
+    name: "Adresse IP Nabaztag"
+    initial: "http://192.168.99.15/"
+    icon: mdi:ip-network
+    
+  nabaztag_tts_language:
+    name: "Langue TTS"
+    initial: "fr"
+    icon: mdi:translate
+    
+  nabaztag_voice:
+    name: "Message TTS"
+    initial: "Dis quelque chose..."
+    min: 1
+    max: 255
+    mode: text
+    icon: mdi:microphone
+
+#------------------------------------------------------------------------------
+# COMMANDES SHELL
+#------------------------------------------------------------------------------
+shell_command:
+  # Contrôle des oreilles
+  nab_ear_left: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}cgi-bin/ears.cgi?left={{ position }}"'
+  nab_ear_right: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}cgi-bin/ears.cgi?right={{ position }}"'
+  nab_ears_both: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}cgi-bin/ears.cgi?left={{ left }}&right={{ right }}"'
+  
+  # Contrôle des LEDs
+  nab_nose_on: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}cgi-bin/leds.cgi?led=nose&color={{ color }}"'
+  nab_nose_off: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}cgi-bin/leds.cgi?led=nose&color=000000"'
+  
+  # TTS
+  nab_talk: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}tts" --data-urlencode "text={{ message }}" --data-urlencode "lang={{ states("input_text.nabaztag_tts_language") }}"'
+
+#------------------------------------------------------------------------------
+# CONTRÔLES DES OREILLES
+#------------------------------------------------------------------------------
+input_number:
+  nabaztag_left_ear:
+    name: "Oreille Gauche"
+    initial: 0
+    min: 0
+    max: 16
+    step: 1
+    icon: mdi:ear-hearing
+    
+  nabaztag_right_ear:
+    name: "Oreille Droite"
+    initial: 0
+    min: 0
+    max: 16
+    step: 1
+    icon: mdi:ear-hearing
+
+#------------------------------------------------------------------------------
+# CONTRÔLES DES LEDS
+#------------------------------------------------------------------------------
+input_boolean:
+  nabaztag_nose_enabled:
+    name: "LED Nez Activée"
+    initial: false
+    icon: mdi:lightbulb
+
+input_select:
+  nabaztag_nose_color:
+    name: "Couleur LED Nez"
+    options:
+      - "Rouge"
+      - "Vert"
+      - "Bleu"
+      - "Jaune"
+      - "Violet"
+      - "Orange"
+      - "Blanc"
+    initial: "Rouge"
+    icon: mdi:palette
+
+#------------------------------------------------------------------------------
+# GROUPES POUR L'INTERFACE
+#------------------------------------------------------------------------------
+group:
+  nabaztag_controls:
+    name: "Contrôles Nabaztag"
+    entities:
+      - input_text.nabaztag_ip_address
+      - input_text.nabaztag_tts_language
+      - input_text.nabaztag_voice
+      - input_number.nabaztag_left_ear
+      - input_number.nabaztag_right_ear
+      - input_boolean.nabaztag_nose_enabled
+      - input_select.nabaztag_nose_color
+      - script.nabaztag_ears_dance
+      - script.nabaztag_led_rainbow
+      - script.nabaztag_reset_position
+
+
+
+#------------------------------------------------------------------------------
+# SCRIPTS UTILES
+#------------------------------------------------------------------------------
+script:
+  nabaztag_talk:
+    alias: "Faire Parler Nabaztag"
+    sequence:
+      - action: shell_command.nab_talk
+        data:
+          message: "{{ message }}"
+    fields:
+      message:
+        description: "Message à faire dire au Nabaztag"
+        example: "Bonjour, comment ça va ?"
+
+  nabaztag_ears_dance:
+    alias: "Danse des Oreilles"
+    sequence:
+      - repeat:
+          count: 5
+          sequence:
+            - action: shell_command.nab_ears_both
+              data:
+                left: "{{ range(0, 17) | random }}"
+                right: "{{ range(0, 17) | random }}"
+            - delay:
+                milliseconds: 500
+
+  nabaztag_led_rainbow:
+    alias: "Arc-en-ciel LED"
+    sequence:
+      - variables:
+          colors:
+            - "FF0000"  # Rouge
+            - "FF8000"  # Orange
+            - "FFFF00"  # Jaune
+            - "00FF00"  # Vert
+            - "0000FF"  # Bleu
+            - "FF00FF"  # Violet
+      - repeat:
+          for_each: "{{ colors }}"
+          sequence:
+            - action: shell_command.nab_nose_on
+              data:
+                color: "{{ repeat.item }}"
+            - delay:
+                milliseconds: 800
+      - action: shell_command.nab_nose_off
+
+  nabaztag_reset_position:
+    alias: "Remettre en Position Normale"
+    sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.nabaztag_left_ear
+        data:
+          value: 0
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.nabaztag_right_ear
+        data:
+          value: 0
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.nabaztag_nose_enabled
+
+#------------------------------------------------------------------------------
+# AUTOMATISATIONS
+#------------------------------------------------------------------------------
+automation:
+  # Mouvement automatique de l'oreille gauche
+  - alias: "Nabaztag - Mouvement Oreille Gauche"
+    id: nabaztag_left_ear_automation
+    trigger:
+      - trigger: state
+        entity_id: input_number.nabaztag_left_ear
+    action:
+      - action: shell_command.nab_ear_left
+        data:
+          position: "{{ states('input_number.nabaztag_left_ear') }}"
+
+  # Mouvement automatique de l'oreille droite
+  - alias: "Nabaztag - Mouvement Oreille Droite"
+    id: nabaztag_right_ear_automation
+    trigger:
+      - trigger: state
+        entity_id: input_number.nabaztag_right_ear
+    action:
+      - action: shell_command.nab_ear_right
+        data:
+          position: "{{ states('input_number.nabaztag_right_ear') }}"
+
+  # Gestion des couleurs du nez
+  - alias: "Nabaztag - Couleur LED Nez"
+    id: nabaztag_nose_color_automation
+    trigger:
+      - trigger: state
+        entity_id: input_select.nabaztag_nose_color
+      - trigger: state
+        entity_id: input_boolean.nabaztag_nose_enabled
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.nabaztag_nose_enabled
+                state: "on"
+            sequence:
+              - variables:
+                  color_map:
+                    "Rouge": "FF0000"
+                    "Vert": "00FF00"
+                    "Bleu": "0000FF"
+                    "Jaune": "FFFF00"
+                    "Violet": "FF00FF"
+                    "Orange": "FF8000"
+                    "Blanc": "FFFFFF"
+              - action: shell_command.nab_nose_on
+                data:
+                  color: "{{ color_map[states('input_select.nabaztag_nose_color')] }}"
+        default:
+          - action: shell_command.nab_nose_off
+
+  # Gestion du TTS
+  - alias: "Nabaztag - Message TTS"
+    id: nabaztag_tts_automation
+    trigger:
+      - trigger: state
+        entity_id: input_text.nabaztag_voice
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
+      - condition: template
+        value_template: "{{ states('input_text.nabaztag_voice') not in ['', 'Dis quelque chose...'] }}"
+      - condition: template
+        value_template: "{{ states('input_text.nabaztag_voice') | length > 0 }}"
+    action:
+      - action: script.nabaztag_talk
+        data:
+          message: "{{ states('input_text.nabaztag_voice') }}"
+      - delay:
+          seconds: 2
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.nabaztag_voice
+        data:
+          value: "Dis quelque chose..."
+
+#------------------------------------------------------------------------------
+# TEMPLATE SENSORS
+#------------------------------------------------------------------------------
+template:
+  - sensor:
+      - name: "Statut Nabaztag"
+        state: >
+          {% set ears_pos = states('input_number.nabaztag_left_ear') + '/' + states('input_number.nabaztag_right_ear') %}
+          {% set nose_status = 'LED: ' + states('input_select.nabaztag_nose_color') if is_state('input_boolean.nabaztag_nose_enabled', 'on') else 'LED: Off' %}
+          Oreilles: {{ ears_pos }} | {{ nose_status }}
+        icon: mdi:carrot
+        attributes:
+          left_ear: "{{ states('input_number.nabaztag_left_ear') }}"
+          right_ear: "{{ states('input_number.nabaztag_right_ear') }}"
+          nose_enabled: "{{ states('input_boolean.nabaztag_nose_enabled') }}"
+          nose_color: "{{ states('input_select.nabaztag_nose_color') }}"
+          ip_address: "{{ states('input_text.nabaztag_ip_address') }}"
+          language: "{{ states('input_text.nabaztag_tts_language') }}"
