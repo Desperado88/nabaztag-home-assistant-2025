@@ -1,7 +1,8 @@
 ###############################################################################
 #                                                                             #
-#                             NABAZTAG PACKAGE                                #
+#                      NABAZTAG PACKAGE - VERSION MODERNISÉE                 #
 #                         Compatible Home Assistant 2025                      #
+#                          Migration vers rest_command                        #
 #                                                                             #
 ###############################################################################
 # Change your Nabaztag ip, tts language and your favourite radio stations url # 
@@ -51,6 +52,12 @@ input_text:
     initial: Say Something...
     min: 1
     max: 255 # valeur original 500
+    mode: text
+  nabaztag_message:
+    name: Message à dire
+    initial: Bonjour !
+    min: 1
+    max: 255
     mode: text
 
 #------------------------------------------------------------------------------
@@ -110,7 +117,7 @@ sensor:
 # Pollution Sensor - Remplacé par REST sensor pour OpenWeather Air Pollution API
   - platform: rest
     name: Air Quality Index
-    resource_template: "https://api.openweathermap.org/data/2.5/air_pollution?lat={{ state_attr('zone.home', 'latitude') }}&lon={{ state_attr('zone.home', 'longitude') }}&appid=!secret openweather_api_key"
+    resource_template: "https://api.openweathermap.org/data/2.5/air_pollution?lat={{ state_attr('zone.home', 'latitude') }}&lon={{ state_attr('zone.home', 'longitude') }}&appid={{ states('input_text.openweather_api_key') }}"
     value_template: "{{ value_json.list[0].main.aqi }}"
     unit_of_measurement: "AQI"
     scan_interval: 1800
@@ -145,9 +152,8 @@ group:
       - input_boolean.nabaztag_taichi
       - input_select.nabaztag_taichi
       - input_boolean.nabaztag_nose
-      - input_select.nabaztag_nose
-      - input_number.nabaztag_left_ear
-      - input_number.nabaztag_right_ear
+      - input_select.nabaztag_nose_state
+      - input_select.nabaztag_ear_position
       - input_select.nabaztag_body_language
 
   nabaztag_lights:
@@ -166,9 +172,11 @@ group:
       - input_boolean.nabaztaglife
       - script.nabaztag_surprise
       - script.nabaztag_stop
+      - script.nabaztag_dance
       - input_select.nabaztag_sounds
       - input_select.nabaztag_radio
-      - input_text.nabaztag_voice
+      - input_text.nabaztag_message
+      - script.nabaztag_talk
       - input_boolean.show_nabaztag_locales
 
   nabaztag_locale_setup:
@@ -210,22 +218,6 @@ input_boolean:
 #------------------------------------------------------------------------------
 input_number:
 #------------------------------------------------------------------------------
-  nabaztag_left_ear:
-    name: Left Ear
-    initial: 0
-    min: 0
-    max: 16
-    step: 1
-    icon: mdi:ear-hearing
-
-  nabaztag_right_ear:
-    name: Right Ear
-    initial: 0
-    min: 0
-    max: 16
-    step: 1
-    icon: mdi:ear-hearing
-
   bitcoin_previous_exchange_rate:
     name: Previous Bitcoin Exchange Rate
     initial: 0
@@ -254,246 +246,6 @@ input_number:
     icon: mdi:clock
 
 #------------------------------------------------------------------------------
-rest_command:
-#------------------------------------------------------------------------------
-  nabaztag_update:
-    url: "{{ states('input_text.nabaztag_ip_address') }}update"
-    method: GET
-    timeout: 10
-
-  nabaztag_reboot:
-    url: "{{ states('input_text.nabaztag_ip_address') }}reboot"
-    method: GET
-    timeout: 10
-
-#------------------------------------------------------------------------------
-script:
-#------------------------------------------------------------------------------
-  nabaztag_surprise:
-    alias: Nabaztag Surprise
-    sequence:
-      - action: script.turn_on
-        target:
-          entity_id: script.nabaztag_random_ear_movement
-      - action: script.turn_on
-        target:
-          entity_id: script.nabaztag_random_nose_color
-      - action: script.turn_on
-        target:
-          entity_id: script.nabaztag_play_sound
-
-  nabaztag_stop:
-    alias: Stop Nabaztag
-    sequence:
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.nabaztag_taichi
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.nabaztag_nose
-      - action: input_select.select_option
-        target:
-          entity_id: input_select.nabaztag_radio
-        data:
-          option: "Off"
-
-  nabaztag_info_off:
-    alias: Turn Off All Info
-    sequence:
-      - action: input_select.select_option
-        target:
-          entity_id: input_select.nabaztag_show_info
-        data:
-          option: "None"
-
-  nabaztag_update:
-    alias: Update Nabaztag
-    sequence:
-      - action: rest_command.nabaztag_update
-
-  nabaztag_reboot:
-    alias: Reboot Nabaztag
-    sequence:
-      - action: rest_command.nabaztag_reboot
-
-  nabaztag_talk:
-    alias: Nabaztag talk
-    sequence:
-      - alias: Nabaztag Google TTS
-        action: tts.google_translate_say
-        target:
-          entity_id: media_player.nabaztag
-        data:
-          message: "{{ message }}"
-          language: "{{ states('input_text.nabaztag_tts_language') }}"
-          cache: true
-      - alias: Call bash script with curl command
-        action: shell_command.nab_talk
-      - alias: Clearing Google TTS
-        action: tts.clear_cache
-
-  nabaztag_wakeup:
-    alias: Wake Up
-    sequence:
-      - action: shell_command.nab_wakeup
-      - action: input_boolean.turn_on
-        target:
-          entity_id: input_boolean.nabaztaglife
-
-  nabaztag_sleep:
-    alias: Sleep
-    sequence:
-      - action: shell_command.nab_sleep
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.nabaztaglife
-
-  nabaztag_taichi:
-    alias: Taichi
-    sequence:
-      - action: shell_command.nab_do_taichi_now
-      - action: input_boolean.turn_on
-        target:
-          entity_id: input_boolean.nabaztag_taichi
-
-  nabaztag_no_taichi:
-    alias: No Taichi
-    sequence:
-      - action: shell_command.nab_taichi_off
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.nabaztag_taichi
-
-  nabaztag_nose_on:
-    alias: Nose On
-    sequence:
-      - action: shell_command.nab_nose_1
-      - action: input_boolean.turn_on
-        target:
-          entity_id: input_boolean.nabaztag_nose
-
-  nabaztag_nose_off:
-    alias: Nose Off
-    sequence:
-      - action: shell_command.nab_nose_0
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.nabaztag_nose
-
-  nabaztag_random_ear_movement:
-    alias: Random Ear Movement
-    sequence:
-      - action: input_number.set_value
-        target:
-          entity_id: input_number.nabaztag_left_ear
-        data:
-          value: "{{ range(0, 17) | random }}"
-      - action: input_number.set_value
-        target:
-          entity_id: input_number.nabaztag_right_ear
-        data:
-          value: "{{ range(0, 17) | random }}"
-
-  nabaztag_random_nose_color:
-    alias: Random Nose Color
-    sequence:
-      - action: input_select.select_option
-        target:
-          entity_id: input_select.nabaztag_nose
-        data:
-          option: >
-            {{ ['Red', 'Green', 'Blue', 'Yellow', 'Purple', 'Orange'] | random }}
-
-  nabaztag_play_sound:
-    alias: Play Random Sound
-    sequence:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_sounds
-                state: "Beep"
-            sequence:
-              - action: shell_command.nab_communication
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_sounds
-                state: "Chime"
-            sequence:
-              - action: shell_command.nab_ack
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_sounds
-                state: "Bell"
-            sequence:
-              - action: shell_command.nab_surprise
-
-  nabaztag_daily_info:
-    alias: Daily Information Summary
-    sequence:
-      - condition: state
-        entity_id: input_boolean.nabaztaglife
-        state: "on"
-      - action: script.nabaztag_talk
-        data:
-          message: >
-            Bonjour ! Voici les informations du jour.
-            La météo est {{ states('weather.home') }}.
-            Le Bitcoin vaut {{ states('sensor.bitcoin_exchange_rate') }} euros.
-            Le trajet vers le travail prendra {{ states('sensor.home_to_work') }} minutes.
-            La qualité de l'air est {{ states('sensor.air_quality_status') }}.
-            Bonne journée !
-
-#------------------------------------------------------------------------------
-switch:
-#------------------------------------------------------------------------------
-  - platform: template
-    switches:
-      nabaztaglife:
-        friendly_name: "Nabaztag Life"
-        value_template: "{{ is_state('input_boolean.nabaztaglife', 'on') }}"
-        turn_on:
-          - action: script.turn_on
-            target:
-              entity_id: script.nabaztag_wakeup
-        turn_off:
-          - action: script.turn_on
-            target:
-              entity_id: script.nabaztag_sleep
-        icon_template: mdi:carrot
-
-      nabaztag_taichi:
-        friendly_name: "Nabaztag Tai Chi"
-        value_template: "{{ is_state('input_boolean.nabaztag_taichi', 'on') }}"
-        turn_on:
-          - action: script.turn_on
-            target:
-              entity_id: script.nabaztag_taichi
-        turn_off:
-          - action: script.turn_on
-            target:
-              entity_id: script.nabaztag_no_taichi
-        icon_template: mdi:meditation
-
-      nabaztag_nose:
-        friendly_name: "Nabaztag Nose"
-        value_template: "{{ is_state('input_boolean.nabaztag_nose', 'on') }}"
-        turn_on:
-          - action: script.turn_on
-            target:
-              entity_id: script.nabaztag_nose_on
-        turn_off:
-          - action: script.turn_on
-            target:
-              entity_id: script.nabaztag_nose_off
-        icon_template: mdi:nose
-
-#------------------------------------------------------------------------------
-media_player:
-#------------------------------------------------------------------------------
-  - trigger: universal
-    name: nabaztag
-
-#------------------------------------------------------------------------------
 input_select:
 #------------------------------------------------------------------------------
   nabaztag_taichi:
@@ -505,18 +257,46 @@ input_select:
     initial: "Off"
     icon: mdi:meditation
 
-  nabaztag_nose:
-    name: Nabaztag Nose Color
+  nabaztag_nose_state:
+    name: Nabaztag Nose State
     options:
-      - "Off"
-      - "Red"
-      - "Green"
-      - "Blue"
-      - "Yellow"
-      - "Purple"
-      - "Orange"
-    initial: "Off"
+      - "off"
+      - "on"
+      - "todo"
+      - "urgent"
+      - "panic"
+    initial: "off"
     icon: mdi:palette
+
+  nabaztag_ear_position:
+    name: Nabaztag Ear Position
+    options:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+      - "6"
+      - "7"
+      - "8"
+      - "9"
+      - "10"
+    initial: "0"
+    icon: mdi:ear-hearing
+
+  nabaztag_weather:
+    name: Nabaztag Weather Display
+    options:
+      - "off"
+      - "soleil"
+      - "nuages"
+      - "brouillard"
+      - "pluie"
+      - "neige"
+      - "storm"
+    initial: "off"
+    icon: mdi:weather-cloudy
 
   nabaztag_body_language:
     name: Nabaztag Body Language
@@ -540,16 +320,6 @@ input_select:
       - "All"
     initial: "None"
     icon: mdi:information
-
-  nabaztag_weather:
-    name: Weather Display
-    options:
-      - "Off"
-      - "Current"
-      - "Forecast"
-      - "Both"
-    initial: "Off"
-    icon: mdi:weather-cloudy
 
   nabaztag_stocks:
     name: Stocks Display
@@ -623,88 +393,344 @@ input_select:
     icon: mdi:clock-outline
 
 #------------------------------------------------------------------------------
-shell_command:
+rest_command:
 #------------------------------------------------------------------------------
-  nab_stop: curl "{{ states('input_text.nabaztag_ip_address') }}stop"
-  nab_clear: curl "{{ states('input_text.nabaztag_ip_address') }}clear"
-  nab_sleep: curl "{{ states('input_text.nabaztag_ip_address') }}sleep"
-  nab_wakeup: curl "{{ states('input_text.nabaztag_ip_address') }}wakeup"
-  nab_gettime: curl "{{ states('input_text.nabaztag_ip_address') }}gettime"
-  nab_reboot: curl "{{ states('input_text.nabaztag_ip_address') }}reboot"
-  nab_communication: curl "{{ states('input_text.nabaztag_ip_address') }}communication"
-  nab_ack: curl "{{ states('input_text.nabaztag_ip_address') }}ack"
-  nab_abort: curl "{{ states('input_text.nabaztag_ip_address') }}abort"
-  nab_ministop: curl "{{ states('input_text.nabaztag_ip_address') }}ministop"
-  nab_do_taichi_now: curl "{{ states('input_text.nabaztag_ip_address') }}taichi?v=1000"
-  nab_taichi_off: curl "{{ states('input_text.nabaztag_ip_address') }}taichi?v=0"
-  nab_taichi_medium: curl "{{ states('input_text.nabaztag_ip_address') }}taichi?v=80"
-  nab_talk: bash /config/www/vl/talk.sh
-  nab_radio_1: curl "{{ states('input_text.nabaztag_ip_address') }}play?u={{ states('input_text.nabaztag_radio_1_ip_address') }}"
-  nab_radio_2: curl "{{ states('input_text.nabaztag_ip_address') }}play?u={{ states('input_text.nabaztag_radio_2_ip_address') }}"
-  nab_radio_3: curl "{{ states('input_text.nabaztag_ip_address') }}play?u={{ states('input_text.nabaztag_radio_3_ip_address') }}"
-  nab_radio_4: curl "{{ states('input_text.nabaztag_ip_address') }}play?u={{ states('input_text.nabaztag_radio_4_ip_address') }}"
-  nab_radio_5: curl "{{ states('input_text.nabaztag_ip_address') }}play?u={{ states('input_text.nabaztag_radio_5_ip_address') }}"
-  nab_nose_1: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=FF0000"
-  nab_nose_0: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=000000"
-  nab_taichi_min: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=taichi_min"
-  nab_taichi_max: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=taichi_max"
-  nab_surprise: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=surprise"
-  nab_nose_red: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=FF0000"
-  nab_nose_green: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=00FF00"
-  nab_nose_blue: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=0000FF"
-  nab_nose_yellow: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=FFFF00"
-  nab_nose_purple: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=FF00FF"
-  nab_nose_orange: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=FF8000"
-  nab_nose_off: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi?led=nose&color=000000"
-  nab_ear_left: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/ears.cgi?left={{ position }}"
-  nab_ear_right: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/ears.cgi?right={{ position }}"
-  nab_lang_en: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?lang=en"
-  nab_lang_fr: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?lang=fr"
-  nab_lang_de: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?lang=de"
-  nab_lang_es: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?lang=es"
-  nab_lang_it: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?lang=it"
-  nab_time_zone_paris: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?timezone=Europe/Paris"
-  nab_time_zone_london: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?timezone=Europe/London"
-  nab_time_zone_berlin: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?timezone=Europe/Berlin"
-  nab_time_zone_rome: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?timezone=Europe/Rome"
-  nab_time_zone_newyork: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi?timezone=America/New_York"
-  nab_weather_current: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather.cgi?current=1"
-  nab_weather_forecast: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather.cgi?forecast=1"
-  nab_weather_off: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather.cgi?off=1"
-  nab_weather_0: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather_display.cgi?icon=sunny"
-  nab_weather_1: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather_display.cgi?icon=cloudy"
-  nab_weather_2: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather_display.cgi?icon=fog"
-  nab_weather_3: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather_display.cgi?icon=rainy"
-  nab_weather_4: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather_display.cgi?icon=snowy"
-  nab_weather_5: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather_display.cgi?icon=stormy"
-  nab_stock_0: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?trend=very_negative"
-  nab_stock_1: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?trend=negative"
-  nab_stock_2: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?trend=slightly_negative"
-  nab_stock_3: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?trend=stable"
-  nab_stock_4: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?trend=slightly_positive"
-  nab_stock_5: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?trend=positive"
-  nab_stock_6: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?trend=very_positive"
-  nab_stock_bitcoin: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?type=bitcoin&value={{ states('sensor.bitcoin_exchange_rate') }}"
-  nab_stock_all: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?type=all"
-  nab_stock_off: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/stock_display.cgi?off=1"
-  nab_traffic_0: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?level=free&time={{ states('sensor.home_to_work') }}"
-  nab_traffic_1: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?level=okay&time={{ states('sensor.home_to_work') }}"
-  nab_traffic_2: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?level=moderate&time={{ states('sensor.home_to_work') }}"
-  nab_traffic_3: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?level=normal&time={{ states('sensor.home_to_work') }}"
-  nab_traffic_4: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?level=heavy&time={{ states('sensor.home_to_work') }}"
-  nab_traffic_5: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?level=congested&time={{ states('sensor.home_to_work') }}"
-  nab_traffic_6: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?level=extreme&time={{ states('sensor.home_to_work') }}"
-  nab_traffic_current: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?current=1&time={{ states('sensor.home_to_work') }}"
-  nab_traffic_alert: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?alert_only=1"
-  nab_traffic_off: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/traffic_display.cgi?off=1"
-  nab_pollution_0: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/pollution_display.cgi?level=good&aqi={{ states('sensor.air_quality_index') }}"
-  nab_pollution_1: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/pollution_display.cgi?level=fair&aqi={{ states('sensor.air_quality_index') }}"
-  nab_pollution_2: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/pollution_display.cgi?level=moderate&aqi={{ states('sensor.air_quality_index') }}"
-  nab_pollution_3: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/pollution_display.cgi?level=poor&aqi={{ states('sensor.air_quality_index') }}"
-  nab_pollution_4: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/pollution_display.cgi?level=very_poor&aqi={{ states('sensor.air_quality_index') }}"
-  nab_pollution_current: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/pollution_display.cgi?current=1&aqi={{ states('sensor.air_quality_index') }}"
-  nab_pollution_alert: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/pollution_display.cgi?alert_only=1"
-  nab_pollution_off: curl -s "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/pollution_display.cgi?off=1"
+  # Commandes de base
+  nabaztag_update:
+    url: "{{ states('input_text.nabaztag_ip_address') }}update"
+    method: GET
+    timeout: 10
+
+  nabaztag_reboot:
+    url: "{{ states('input_text.nabaztag_ip_address') }}reboot"
+    method: GET
+    timeout: 10
+
+  nabaztag_stop:
+    url: "{{ states('input_text.nabaztag_ip_address') }}stop"
+    method: GET
+    timeout: 10
+
+  nabaztag_sleep:
+    url: "{{ states('input_text.nabaztag_ip_address') }}sleep"
+    method: GET
+    timeout: 10
+
+  nabaztag_wakeup:
+    url: "{{ states('input_text.nabaztag_ip_address') }}wakeup"
+    method: GET
+    timeout: 10
+
+  # Commandes Tai Chi
+  nabaztag_taichi_on:
+    url: "{{ states('input_text.nabaztag_ip_address') }}taichi?v=1000"
+    method: GET
+    timeout: 10
+
+  nabaztag_taichi_off:
+    url: "{{ states('input_text.nabaztag_ip_address') }}taichi?v=0"
+    method: GET
+    timeout: 10
+
+  nabaztag_taichi_slow:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=taichi_min"
+    method: GET
+    timeout: 10
+
+  nabaztag_taichi_fast:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=taichi_max"
+    method: GET
+    timeout: 10
+
+  # Commandes oreilles
+  nabaztag_move_left_ear:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/ears.cgi"
+    method: GET
+    timeout: 10
+    payload: "left={{ left_position }}"
+
+  nabaztag_move_right_ear:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/ears.cgi"
+    method: GET
+    timeout: 10
+    payload: "right={{ right_position }}"
+
+  nabaztag_move_both_ears:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/ears.cgi"
+    method: GET
+    timeout: 10
+    payload: "left={{ left_position }}&right={{ right_position }}"
+
+  # Commandes nez
+  nabaztag_set_nose:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi"
+    method: GET
+    timeout: 10
+    payload: "led=nose&color={{ nose_color }}"
+
+  # Commandes météo
+  nabaztag_set_weather:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather_display.cgi"
+    method: GET
+    timeout: 10
+    payload: "icon={{ weather_icon }}"
+
+  # Commandes radio
+  nabaztag_play_radio:
+    url: "{{ states('input_text.nabaztag_ip_address') }}play"
+    method: GET
+    timeout: 10
+    payload: "u={{ radio_url }}"
+
+  # Commandes sons
+  nabaztag_communication:
+    url: "{{ states('input_text.nabaztag_ip_address') }}communication"
+    method: GET
+    timeout: 10
+
+  nabaztag_ack:
+    url: "{{ states('input_text.nabaztag_ip_address') }}ack"
+    method: GET
+    timeout: 10
+
+  nabaztag_surprise:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=surprise"
+    method: GET
+    timeout: 10
+
+  # Commandes de configuration
+  nabaztag_set_language:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi"
+    method: GET
+    timeout: 10
+    payload: "lang={{ language }}"
+
+  nabaztag_set_timezone:
+    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi"
+    method: GET
+    timeout: 10
+    payload: "timezone={{ timezone }}"
+
+#------------------------------------------------------------------------------
+script:
+#------------------------------------------------------------------------------
+  nabaztag_talk:
+    alias: Nabaztag Talk
+    sequence:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
+      - action: tts.google_translate_say
+        target:
+          entity_id: media_player.nabaztag
+        data:
+          message: "{{ states('input_text.nabaztag_message') }}"
+          language: "{{ states('input_text.nabaztag_tts_language') }}"
+          cache: true
+      - delay:
+          seconds: 1
+      - action: tts.clear_cache
+
+  nabaztag_move_left_ear:
+    alias: Move Left Ear
+    sequence:
+      - action: rest_command.nabaztag_move_left_ear
+        data:
+          left_position: "{{ states('input_select.nabaztag_ear_position') }}"
+
+  nabaztag_move_right_ear:
+    alias: Move Right Ear
+    sequence:
+      - action: rest_command.nabaztag_move_right_ear
+        data:
+          right_position: "{{ states('input_select.nabaztag_ear_position') }}"
+
+  nabaztag_move_both_ears:
+    alias: Move Both Ears
+    sequence:
+      - action: rest_command.nabaztag_move_both_ears
+        data:
+          left_position: "{{ states('input_select.nabaztag_ear_position') }}"
+          right_position: "{{ states('input_select.nabaztag_ear_position') }}"
+
+  nabaztag_set_nose:
+    alias: Set Nose Color
+    sequence:
+      - action: rest_command.nabaztag_set_nose
+        data:
+          nose_color: >
+            {% set state = states('input_select.nabaztag_nose_state') %}
+            {% if state == 'off' %}000000
+            {% elif state == 'on' %}00FF00
+            {% elif state == 'todo' %}0000FF
+            {% elif state == 'urgent' %}FF8000
+            {% elif state == 'panic' %}FF0000
+            {% else %}000000
+            {% endif %}
+
+  nabaztag_set_weather:
+    alias: Set Weather Display
+    sequence:
+      - action: rest_command.nabaztag_set_weather
+        data:
+          weather_icon: "{{ states('input_select.nabaztag_weather') }}"
+
+  nabaztag_dance:
+    alias: Nabaztag Dance
+    sequence:
+      - repeat:
+          count: 3
+          sequence:
+            - action: rest_command.nabaztag_move_both_ears
+              data:
+                left_position: "{{ range(0, 11) | random }}"
+                right_position: "{{ range(0, 11) | random }}"
+            - delay:
+                milliseconds: 500
+            - action: rest_command.nabaztag_set_nose
+              data:
+                nose_color: >
+                  {{ ['FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', 'FF8000'] | random }}
+            - delay:
+                milliseconds: 500
+
+  nabaztag_surprise:
+    alias: Nabaztag Surprise
+    sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.nabaztag_dance
+      - action: rest_command.nabaztag_surprise
+
+  nabaztag_stop:
+    alias: Stop Nabaztag
+    sequence:
+      - action: rest_command.nabaztag_stop
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.nabaztag_taichi
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.nabaztag_nose
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.nabaztag_radio
+        data:
+          option: "Off"
+
+  nabaztag_info_off:
+    alias: Turn Off All Info
+    sequence:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.nabaztag_show_info
+        data:
+          option: "None"
+
+  nabaztag_update:
+    alias: Update Nabaztag
+    sequence:
+      - action: rest_command.nabaztag_update
+
+  nabaztag_reboot:
+    alias: Reboot Nabaztag
+    sequence:
+      - action: rest_command.nabaztag_reboot
+
+  nabaztag_wakeup:
+    alias: Wake Up
+    sequence:
+      - action: rest_command.nabaztag_wakeup
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.nabaztaglife
+
+  nabaztag_sleep:
+    alias: Sleep
+    sequence:
+      - action: rest_command.nabaztag_sleep
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.nabaztaglife
+
+  nabaztag_daily_info:
+    alias: Daily Information Summary
+    sequence:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
+      - action: script.nabaztag_talk
+        data:
+          message: >
+            Bonjour ! Voici les informations du jour.
+            La météo est {{ states('weather.home') }}.
+            Le Bitcoin vaut {{ states('sensor.bitcoin_exchange_rate') }} euros.
+            Le trajet vers le travail prendra {{ states('sensor.home_to_work') }} minutes.
+            La qualité de l'air est {{ states('sensor.air_quality_status') }}.
+            Bonne journée !
+
+#------------------------------------------------------------------------------
+switch:
+#------------------------------------------------------------------------------
+  - platform: template
+    switches:
+      nabaztaglife:
+        friendly_name: "Nabaztag Life"
+        value_template: "{{ is_state('input_boolean.nabaztaglife', 'on') }}"
+        turn_on:
+          - action: script.turn_on
+            target:
+              entity_id: script.nabaztag_wakeup
+        turn_off:
+          - action: script.turn_on
+            target:
+              entity_id: script.nabaztag_sleep
+        icon_template: mdi:carrot
+
+      nabaztag_taichi:
+        friendly_name: "Nabaztag Tai Chi"
+        value_template: "{{ is_state('input_boolean.nabaztag_taichi', 'on') }}"
+        turn_on:
+          - action: rest_command.nabaztag_taichi_on
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.nabaztag_taichi
+        turn_off:
+          - action: rest_command.nabaztag_taichi_off
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.nabaztag_taichi
+        icon_template: mdi:meditation
+
+      nabaztag_nose:
+        friendly_name: "Nabaztag Nose"
+        value_template: "{{ is_state('input_boolean.nabaztag_nose', 'on') }}"
+        turn_on:
+          - action: script.turn_on
+            target:
+              entity_id: script.nabaztag_set_nose
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.nabaztag_nose
+        turn_off:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.nabaztag_nose_state
+            data:
+              option: "off"
+          - action: script.turn_on
+            target:
+              entity_id: script.nabaztag_set_nose
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.nabaztag_nose
+        icon_template: mdi:nose
+
+#------------------------------------------------------------------------------
+media_player:
+#------------------------------------------------------------------------------
+  - platform: universal
+    name: nabaztag
 
 #------------------------------------------------------------------------------
 automation:
@@ -739,9 +765,182 @@ automation:
         target:
           entity_id: script.nabaztag_sleep
 
-  # Météo du matin
-  - alias: "Nabaztag Morning Weather"
-    id: nabaztag_morning_weather
+  # Gestion des changements d'état des input_select
+  - alias: "Nabaztag Handle Radio Selection"
+    id: nabaztag_handle_radio_selection
+    trigger:
+      - trigger: state
+        entity_id: input_select.nabaztag_radio
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.nabaztag_radio
+                state: "Radio 1"
+            sequence:
+              - action: rest_command.nabaztag_play_radio
+                data:
+                  radio_url: "{{ states('input_text.nabaztag_radio_1_ip_address') }}"
+          - conditions:
+              - condition: state
+                entity_id: input_select.nabaztag_radio
+                state: "Radio 2"
+            sequence:
+              - action: rest_command.nabaztag_play_radio
+                data:
+                  radio_url: "{{ states('input_text.nabaztag_radio_2_ip_address') }}"
+          - conditions:
+              - condition: state
+                entity_id: input_select.nabaztag_radio
+                state: "Radio 3"
+            sequence:
+              - action: rest_command.nabaztag_play_radio
+                data:
+                  radio_url: "{{ states('input_text.nabaztag_radio_3_ip_address') }}"
+          - conditions:
+              - condition: state
+                entity_id: input_select.nabaztag_radio
+                state: "Radio 4"
+            sequence:
+              - action: rest_command.nabaztag_play_radio
+                data:
+                  radio_url: "{{ states('input_text.nabaztag_radio_4_ip_address') }}"
+          - conditions:
+              - condition: state
+                entity_id: input_select.nabaztag_radio
+                state: "Radio 5"
+            sequence:
+              - action: rest_command.nabaztag_play_radio
+                data:
+                  radio_url: "{{ states('input_text.nabaztag_radio_5_ip_address') }}"
+        default:
+          - action: rest_command.nabaztag_stop
+
+  # Gestion des changements de position des oreilles
+  - alias: "Nabaztag Handle Ear Position Change"
+    id: nabaztag_handle_ear_position
+    trigger:
+      - trigger: state
+        entity_id: input_select.nabaztag_ear_position
+    action:
+      - action: script.turn_on
+        target:
+          entity_id: script.nabaztag_move_both_ears
+
+  # Gestion des changements d'état du nez
+  - alias: "Nabaztag Handle Nose State Change"
+    id: nabaztag_handle_nose_state
+    trigger:
+      - trigger: state
+        entity_id: input_select.nabaztag_nose_state
+    action:
+      - action: script.turn_on
+        target:
+          entity_id: script.nabaztag_set_nose
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.nabaztag_nose
+        data_template:
+          entity_id: >
+            {% if states('input_select.nabaztag_nose_state') != 'off' %}
+              input_boolean.nabaztag_nose
+            {% endif %}
+
+  # Gestion des changements de météo
+  - alias: "Nabaztag Handle Weather Change"
+    id: nabaztag_handle_weather_change
+    trigger:
+      - trigger: state
+        entity_id: input_select.nabaztag_weather
+    condition:
+      - condition: template
+        value_template: "{{ states('input_select.nabaztag_weather') != 'off' }}"
+    action:
+      - action: script.turn_on
+        target:
+          entity_id: script.nabaztag_set_weather
+
+  # Gestion du mode Tai Chi
+  - alias: "Nabaztag Handle Tai Chi Mode"
+    id: nabaztag_handle_taichi_mode
+    trigger:
+      - trigger: state
+        entity_id: input_select.nabaztag_taichi
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.nabaztag_taichi
+                state: "Slow"
+            sequence:
+              - action: rest_command.nabaztag_taichi_slow
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.nabaztag_taichi
+          - conditions:
+              - condition: state
+                entity_id: input_select.nabaztag_taichi
+                state: "Fast"
+            sequence:
+              - action: rest_command.nabaztag_taichi_fast
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.nabaztag_taichi
+        default:
+          - action: rest_command.nabaztag_taichi_off
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.nabaztag_taichi
+
+  # Gestion des langues
+  - alias: "Nabaztag Handle Language Change"
+    id: nabaztag_handle_language
+    trigger:
+      - trigger: state
+        entity_id: input_select.nabaztag_language
+    action:
+      - action: rest_command.nabaztag_set_language
+        data:
+          language: "{{ states('input_select.nabaztag_language') }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.nabaztag_tts_language
+        data:
+          value: "{{ states('input_select.nabaztag_language') }}"
+
+  # Gestion des fuseaux horaires
+  - alias: "Nabaztag Handle Timezone Change"
+    id: nabaztag_handle_timezone
+    trigger:
+      - trigger: state
+        entity_id: input_select.nabaztag_time_zone
+    action:
+      - action: rest_command.nabaztag_set_timezone
+        data:
+          timezone: "{{ states('input_select.nabaztag_time_zone') }}"
+
+  # Envoi de messages TTS
+  - alias: "Nabaztag Handle TTS Message"
+    id: nabaztag_handle_tts
+    trigger:
+      - trigger: state
+        entity_id: input_text.nabaztag_message
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
+      - condition: template
+        value_template: "{{ states('input_text.nabaztag_message') | length > 0 }}"
+      - condition: template
+        value_template: "{{ states('input_text.nabaztag_message') != 'Bonjour !' }}"
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
+    action:
+      - action: script.nabaztag_talk
+
+  # Météo du matin basée sur l'intégration météo
+  - alias: "Nabaztag Morning Weather Auto"
+    id: nabaztag_morning_weather_auto
     trigger:
       - trigger: time
         at: "08:00:00"
@@ -753,49 +952,33 @@ automation:
         conditions:
           - condition: state
             entity_id: input_select.nabaztag_weather
-            state: "Off"
+            state: "off"
     action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: weather.home
-                state: "sunny"
-            sequence:
-              - action: shell_command.nab_weather_0
-          - conditions:
-              - condition: state
-                entity_id: weather.home
-                state: "cloudy"
-            sequence:
-              - action: shell_command.nab_weather_1
-          - conditions:
-              - condition: state
-                entity_id: weather.home
-                state: "fog"
-            sequence:
-              - action: shell_command.nab_weather_2
-          - conditions:
-              - condition: state
-                entity_id: weather.home
-                state: "rainy"
-            sequence:
-              - action: shell_command.nab_weather_3
-          - conditions:
-              - condition: state
-                entity_id: weather.home
-                state: "snowy"
-            sequence:
-              - action: shell_command.nab_weather_4
-          - conditions:
-              - condition: state
-                entity_id: weather.home
-                state: "lightning-rainy"
-            sequence:
-              - action: shell_command.nab_weather_5
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.nabaztag_weather
+        data:
+          option: >
+            {% set weather_state = states('weather.home') %}
+            {% if weather_state in ['sunny', 'clear-night'] %}
+              soleil
+            {% elif weather_state in ['cloudy', 'partlycloudy'] %}
+              nuages
+            {% elif weather_state == 'fog' %}
+              brouillard
+            {% elif weather_state in ['rainy', 'pouring'] %}
+              pluie
+            {% elif weather_state in ['snowy', 'snowy-rainy'] %}
+              neige
+            {% elif weather_state in ['lightning', 'lightning-rainy'] %}
+              storm
+            {% else %}
+              nuages
+            {% endif %}
 
   # Informations trafic avant le travail
-  - alias: "Nabaztag Morning Traffic"
-    id: nabaztag_morning_traffic
+  - alias: "Nabaztag Morning Traffic Auto"
+    id: nabaztag_morning_traffic_auto
     trigger:
       - trigger: time
         at: "07:30:00"
@@ -816,29 +999,24 @@ automation:
           - thu
           - fri
     action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.traffic_status
-                state: "good"
-            sequence:
-              - action: shell_command.nab_traffic_0
-          - conditions:
-              - condition: state
-                entity_id: sensor.traffic_status
-                state: "moderate"
-            sequence:
-              - action: shell_command.nab_traffic_2
-          - conditions:
-              - condition: state
-                entity_id: sensor.traffic_status
-                state: "heavy"
-            sequence:
-              - action: shell_command.nab_traffic_4
+      - action: script.nabaztag_talk
+        data:
+          message: >
+            {% set traffic = states('sensor.traffic_status') %}
+            {% set time = states('sensor.home_to_work') %}
+            {% if traffic == 'good' %}
+              Bonne nouvelle ! Le trajet vers le travail ne prendra que {{ time }} minutes aujourd'hui.
+            {% elif traffic == 'moderate' %}
+              Attention, le trafic est modéré. Comptez {{ time }} minutes pour aller au travail.
+            {% elif traffic == 'heavy' %}
+              Attention ! Le trafic est dense. Il faudra {{ time }} minutes pour rejoindre le travail. Partez plus tôt !
+            {% else %}
+              Le temps de trajet vers le travail est de {{ time }} minutes.
+            {% endif %}
 
   # Cours du Bitcoin (mise à jour toutes les heures pendant la journée)
-  - alias: "Nabaztag Bitcoin Update"
-    id: nabaztag_bitcoin_update
+  - alias: "Nabaztag Bitcoin Update Auto"
+    id: nabaztag_bitcoin_update_auto
     trigger:
       - trigger: time_pattern
         minutes: 0
@@ -865,11 +1043,21 @@ automation:
           entity_id: input_number.bitcoin_previous_exchange_rate
         data:
           value: "{{ states('sensor.bitcoin_exchange_rate') }}"
-      - action: shell_command.nab_stock_bitcoin
+      - action: script.nabaztag_talk
+        data:
+          message: >
+            {% set current = states('sensor.bitcoin_exchange_rate') | float %}
+            {% set previous = states('input_number.bitcoin_previous_exchange_rate') | float %}
+            {% set diff = current - previous %}
+            {% if diff > 0 %}
+              Excellente nouvelle ! Le Bitcoin a augmenté et vaut maintenant {{ current | round(0) }} euros.
+            {% else %}
+              Attention, le Bitcoin a baissé et vaut maintenant {{ current | round(0) }} euros.
+            {% endif %}
 
   # Qualité de l'air (alerte si mauvaise)
-  - alias: "Nabaztag Air Quality Alert"
-    id: nabaztag_air_quality_alert
+  - alias: "Nabaztag Air Quality Alert Auto"
+    id: nabaztag_air_quality_alert_auto
     trigger:
       - trigger: state
         entity_id: sensor.air_quality_index
@@ -886,302 +1074,38 @@ automation:
         entity_id: sensor.air_quality_index
         above: 3
     action:
-      - choose:
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.air_quality_index
-                below: 5
-            sequence:
-              - action: shell_command.nab_pollution_3
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.air_quality_index
-                above: 4
-            sequence:
-              - action: shell_command.nab_pollution_4
-
-  # Gestion des changements d'état des input_select
-  - alias: "Nabaztag Handle Radio Selection"
-    id: nabaztag_handle_radio_selection
-    trigger:
-      - trigger: state
-        entity_id: input_select.nabaztag_radio
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_radio
-                state: "Radio 1"
-            sequence:
-              - action: shell_command.nab_radio_1
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_radio
-                state: "Radio 2"
-            sequence:
-              - action: shell_command.nab_radio_2
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_radio
-                state: "Radio 3"
-            sequence:
-              - action: shell_command.nab_radio_3
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_radio
-                state: "Radio 4"
-            sequence:
-              - action: shell_command.nab_radio_4
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_radio
-                state: "Radio 5"
-            sequence:
-              - action: shell_command.nab_radio_5
-        default:
-          - action: shell_command.nab_stop
-
-  # Gestion des couleurs du nez
-  - alias: "Nabaztag Handle Nose Color"
-    id: nabaztag_handle_nose_color
-    trigger:
-      - trigger: state
-        entity_id: input_select.nabaztag_nose
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_nose
-                state: "Red"
-            sequence:
-              - action: shell_command.nab_nose_red
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_nose
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_nose
-                state: "Green"
-            sequence:
-              - action: shell_command.nab_nose_green
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_nose
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_nose
-                state: "Blue"
-            sequence:
-              - action: shell_command.nab_nose_blue
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_nose
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_nose
-                state: "Yellow"
-            sequence:
-              - action: shell_command.nab_nose_yellow
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_nose
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_nose
-                state: "Purple"
-            sequence:
-              - action: shell_command.nab_nose_purple
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_nose
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_nose
-                state: "Orange"
-            sequence:
-              - action: shell_command.nab_nose_orange
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_nose
-        default:
-          - action: shell_command.nab_nose_off
-          - action: input_boolean.turn_off
-            target:
-              entity_id: input_boolean.nabaztag_nose
-
-  # Gestion des mouvements Tai Chi
-  - alias: "Nabaztag Handle Tai Chi Mode"
-    id: nabaztag_handle_taichi_mode
-    trigger:
-      - trigger: state
-        entity_id: input_select.nabaztag_taichi
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_taichi
-                state: "Slow"
-            sequence:
-              - action: shell_command.nab_taichi_min
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_taichi
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_taichi
-                state: "Fast"
-            sequence:
-              - action: shell_command.nab_taichi_max
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_taichi
-        default:
-          - action: shell_command.nab_taichi_off
-          - action: input_boolean.turn_off
-            target:
-              entity_id: input_boolean.nabaztag_taichi
-
-  # Gestion des mouvements d'oreilles
-  - alias: "Nabaztag Handle Left Ear Movement"
-    id: nabaztag_handle_left_ear
-    trigger:
-      - trigger: state
-        entity_id: input_number.nabaztag_left_ear
-    action:
-      - action: shell_command.nab_ear_left
+      - action: script.nabaztag_talk
         data:
-          position: "{{ states('input_number.nabaztag_left_ear') }}"
+          message: >
+            {% set aqi = states('sensor.air_quality_index') | int %}
+            {% set quality = states('sensor.air_quality_status') %}
+            {% if aqi == 4 %}
+              Attention ! La qualité de l'air est mauvaise aujourd'hui. Évitez les activités extérieures intenses.
+            {% elif aqi == 5 %}
+              Alerte pollution ! La qualité de l'air est très mauvaise. Restez à l'intérieur si possible.
+            {% else %}
+              La qualité de l'air est {{ quality }}.
+            {% endif %}
 
-  - alias: "Nabaztag Handle Right Ear Movement"
-    id: nabaztag_handle_right_ear
+  # Résumé quotidien du matin
+  - alias: "Nabaztag Daily Morning Summary"
+    id: nabaztag_daily_morning_summary
     trigger:
-      - trigger: state
-        entity_id: input_number.nabaztag_right_ear
-    action:
-      - action: shell_command.nab_ear_right
-        data:
-          position: "{{ states('input_number.nabaztag_right_ear') }}"
-
-  # Gestion des langues
-  - alias: "Nabaztag Handle Language Change"
-    id: nabaztag_handle_language
-    trigger:
-      - trigger: state
-        entity_id: input_select.nabaztag_language
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_language
-                state: "en"
-            sequence:
-              - action: shell_command.nab_lang_en
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.nabaztag_tts_language
-                data:
-                  value: "en"
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_language
-                state: "de"
-            sequence:
-              - action: shell_command.nab_lang_de
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.nabaztag_tts_language
-                data:
-                  value: "de"
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_language
-                state: "es"
-            sequence:
-              - action: shell_command.nab_lang_es
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.nabaztag_tts_language
-                data:
-                  value: "es"
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_language
-                state: "it"
-            sequence:
-              - action: shell_command.nab_lang_it
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.nabaztag_tts_language
-                data:
-                  value: "it"
-        default:
-          - action: shell_command.nab_lang_fr
-          - action: input_text.set_value
-            target:
-              entity_id: input_text.nabaztag_tts_language
-            data:
-              value: "fr"
-
-  # Gestion des fuseaux horaires
-  - alias: "Nabaztag Handle Timezone Change"
-    id: nabaztag_handle_timezone
-    trigger:
-      - trigger: state
-        entity_id: input_select.nabaztag_time_zone
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_time_zone
-                state: "Europe/London"
-            sequence:
-              - action: shell_command.nab_time_zone_london
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_time_zone
-                state: "Europe/Berlin"
-            sequence:
-              - action: shell_command.nab_time_zone_berlin
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_time_zone
-                state: "Europe/Rome"
-            sequence:
-              - action: shell_command.nab_time_zone_rome
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_time_zone
-                state: "America/New_York"
-            sequence:
-              - action: shell_command.nab_time_zone_newyork
-        default:
-          - action: shell_command.nab_time_zone_paris
-
-  # Envoi de messages TTS
-  - alias: "Nabaztag Handle TTS Message"
-    id: nabaztag_handle_tts
-    trigger:
-      - trigger: state
-        entity_id: input_text.nabaztag_voice
+      - trigger: time
+        at: "08:30:00"
     condition:
-      - condition: template
-        value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
-      - condition: template
-        value_template: "{{ states('input_text.nabaztag_voice') | length > 0 }}"
       - condition: state
         entity_id: input_boolean.nabaztaglife
         state: "on"
+      - condition: time
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
     action:
-      - action: script.nabaztag_talk
-        data:
-          message: "{{ states('input_text.nabaztag_voice') }}"
-      - delay:
-          seconds: 2
-      - action: input_text.set_value
-        target:
-          entity_id: input_text.nabaztag_voice
-        data:
-          value: "Say Something..."
+      - action: script.nabaztag_daily_info
 
 #------------------------------------------------------------------------------
 # TEMPLATE POUR SURVEILLER L'ÉTAT DU NABAZTAG
@@ -1200,10 +1124,10 @@ template:
           {% if is_state('input_boolean.nabaztaglife', 'on') %}
             {% set status = ['Actif'] %}
             {% if is_state('input_boolean.nabaztag_taichi', 'on') %}
-              {% set status = status + ['Tai Chi'] %}
+              {% set status = status + ['Tai Chi: ' + states('input_select.nabaztag_taichi')] %}
             {% endif %}
             {% if is_state('input_boolean.nabaztag_nose', 'on') %}
-              {% set status = status + ['Nez allumé'] %}
+              {% set status = status + ['Nez: ' + states('input_select.nabaztag_nose_state')] %}
             {% endif %}
             {% if not is_state('input_select.nabaztag_radio', 'Off') %}
               {% set status = status + ['Radio: ' + states('input_select.nabaztag_radio')] %}
@@ -1218,3 +1142,33 @@ template:
           {% else %}
             mdi:sleep
           {% endif %}
+        attributes:
+          ear_position: "{{ states('input_select.nabaztag_ear_position') }}"
+          nose_state: "{{ states('input_select.nabaztag_nose_state') }}"
+          weather_display: "{{ states('input_select.nabaztag_weather') }}"
+          language: "{{ states('input_select.nabaztag_language') }}"
+          timezone: "{{ states('input_select.nabaztag_time_zone') }}"
+
+#------------------------------------------------------------------------------
+# NOTIFICATION POUR ÉVÉNEMENTS IMPORTANTS
+#------------------------------------------------------------------------------
+  - trigger:
+      - trigger: state
+        entity_id: input_boolean.nabaztaglife
+        to: 'on'
+    action:
+      - action: script.nabaztag_talk
+        data:
+          message: "Bonjour ! Je me réveille et suis prêt à vous servir !"
+      - delay:
+          seconds: 2
+      - action: script.nabaztag_dance
+
+  - trigger:
+      - trigger: state
+        entity_id: input_boolean.nabaztaglife
+        to: 'off'
+    action:
+      - action: script.nabaztag_talk
+        data:
+          message: "Bonne nuit ! Je vais me reposer maintenant."
