@@ -6,19 +6,6 @@ cards:
       # 🐰 **Configuration Setup Nabaztag**
       ---
   - type: entities
-    title: 🌐 Connexion
-    show_header_toggle: false
-    entities:
-      - entity: input_text.nabaztag_ip_address
-        name: Adresse IP
-        icon: mdi:ip-network
-      - type: button
-        name: 🔍 Test Connexion
-        icon: mdi:connection
-        tap_action:
-          action: call-service
-          service: script.nabaztag_test_connection
-  - type: entities
     title: 📍 Localisation & Langue
     show_header_toggle: false
     entities:
