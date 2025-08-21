@@ -7,6 +7,11 @@ input_text:
     name: "Adresse IP Nabaztag"
     initial: "192.168.0.13"
 
+  nabaztag_message:
+    name: "Message à dire"
+    initial: "Bonjour, je m'appelle Nabaztag"
+    max: 255
+
 # Sélecteurs pour les positions et états
 input_select:
   nabaztag_ear_position:
@@ -45,38 +50,38 @@ input_select:
       - "neige"
       - "storm"
     initial: "soleil"
-
+      
 # Scripts pour contrôler le Nabaztag
 script:
   nabaztag_move_left_ear:
     alias: "Nabaztag - Oreille gauche"
     sequence:
-      - action: shell_command.nabaztag_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: "{{ states('input_select.nabaztag_ear_position') }}"
 
   nabaztag_move_right_ear:
     alias: "Nabaztag - Oreille droite"
     sequence:
-      - action: shell_command.nabaztag_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: "{{ states('input_select.nabaztag_ear_position') }}"
 
   nabaztag_move_both_ears:
     alias: "Nabaztag - Les deux oreilles"
     sequence:
-      - action: shell_command.nabaztag_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: "{{ states('input_select.nabaztag_ear_position') }}"
       - delay: "00:00:01"
-      - action: shell_command.nabaztag_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: "{{ states('input_select.nabaztag_ear_position') }}"
 
   nabaztag_set_nose:
     alias: "Nabaztag - État du nez"
     sequence:
-      - action: shell_command.nabaztag_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: >
             {% set nose_state = states('input_select.nabaztag_nose_state') %}
@@ -90,7 +95,7 @@ script:
   nabaztag_set_weather:
     alias: "Nabaztag - Météo"
     sequence:
-      - action: shell_command.nabaztag_weather
+      - action: rest_command.nabaztag_weather
         data:
           weather: >
             {% set weather_state = states('input_select.nabaztag_weather') %}
@@ -99,7 +104,7 @@ script:
             {% elif weather_state == 'brouillard' %}2
             {% elif weather_state == 'pluie' %}3
             {% elif weather_state == 'neige' %}4
-            {% elif weather_state == 'storm' %}5
+            {% elif weather_state == 'tempete' %}5
             {% endif %}
 
   nabaztag_dance:
@@ -108,50 +113,57 @@ script:
       - repeat:
           count: 3
           sequence:
-            - action: shell_command.nabaztag_left_ear
+            - action: rest_command.nabaztag_left_ear
               data:
                 position: "0"
-            - action: shell_command.nabaztag_right_ear
+            - action: rest_command.nabaztag_right_ear
               data:
                 position: "10"
             - delay: "00:00:01"
-            - action: shell_command.nabaztag_left_ear
+            - action: rest_command.nabaztag_left_ear
               data:
                 position: "10"
-            - action: shell_command.nabaztag_right_ear
+            - action: rest_command.nabaztag_right_ear
               data:
                 position: "0"
             - delay: "00:00:01"
-      - action: shell_command.nabaztag_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: "5"
-      - action: shell_command.nabaztag_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: "5"
 
   nabaztag_talk:
     alias: "Nabaztag - Parler"
-    fields:
-      message:
-        description: "Message à faire dire au Nabaztag"
-        example: "Bonjour, il est temps de se réveiller"
     sequence:
-      - action: shell_command.nabaztag_say
-        data:
-          text: "{{ message }}"
+      - action: rest_command.nabaztag_say
 
-# Commandes shell
-shell_command:
-  nabaztag_left_ear: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}/left?p={{ position }}&d=0"'
-  nabaztag_right_ear: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}/right?p={{ position }}&d=0"'
-  nabaztag_nose: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}/nose?v={{ state }}"'
-  nabaztag_weather: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}/weather?v={{ weather }}"'
-  
-  # Commandes pour la synthèse vocale (testez ces différentes variantes)
-  nabaztag_say: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}/tts?text={{ text | urlencode }}"'
-  nabaztag_say_alt1: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}/say?text={{ text | urlencode }}"'
-  nabaztag_say_alt2: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}/speak?message={{ text | urlencode }}"'
-  nabaztag_play_sound: 'curl -s "{{ states("input_text.nabaztag_ip_address") }}/sound?id=1"'
+rest_command:
+  nabaztag_say:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/say?text={{ states('input_text.nabaztag_message') | urlencode }}"
+    method: get
+    timeout: 30
+  nabaztag_left_ear:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/left?p={{ position }}&d=0"
+    method: get
+    timeout: 10
+  nabaztag_right_ear:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/right?p={{ position }}&d=0"
+    method: get
+    timeout: 10
+  nabaztag_nose:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/nose?v={{ state }}"
+    method: get
+    timeout: 10
+  nabaztag_weather:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/weather?v={{ weather }}"
+    method: get
+    timeout: 10
+  nabaztag_play_sound:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/sound?id=1"
+    method: get
+    timeout: 10
 
 # Automatisations d'exemple
 automation:
@@ -194,17 +206,84 @@ automation:
       - repeat:
           count: 5
           sequence:
-            - action: shell_command.nabaztag_left_ear
+            - action: rest_command.nabaztag_left_ear
               data:
                 position: "0"
-            - action: shell_command.nabaztag_right_ear
+            - action: rest_command.nabaztag_right_ear
               data:
                 position: "10"
             - delay: "00:00:01"
-            - action: shell_command.nabaztag_left_ear
+            - action: rest_command.nabaztag_left_ear
               data:
                 position: "10"
-            - action: shell_command.nabaztag_right_ear
+            - action: rest_command.nabaztag_right_ear
               data:
                 position: "0"
             - delay: "00:00:01"
+            
+___________________________ FIN du YAML !!!!! ________________________________
+# Interface utilisateur - À ajouter via l'éditeur d'interface
+type: vertical-stack
+cards:
+  - type: entities
+    title: 🎭 Nabaztag - Contrôle
+    entities:
+      - entity: input_text.nabaztag_ip_address
+        name: Adresse IP du Nabaztag
+      - entity: input_select.nabaztag_ear_position
+        name: Position des oreilles
+      - entity: input_select.nabaztag_nose_state
+        name: État du nez
+      - entity: input_select.nabaztag_weather
+        name: Météo
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Oreille gauche
+        icon: mdi:arrow-left-bold
+        tap_action:
+          action: call-service
+          service: script.nabaztag_move_left_ear
+      - type: button
+        name: Oreille droite
+        icon: mdi:arrow-right-bold
+        tap_action:
+          action: call-service
+          service: script.nabaztag_move_right_ear
+      - type: button
+        name: Les deux
+        icon: mdi:sync
+        tap_action:
+          action: call-service
+          service: script.nabaztag_move_both_ears
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Danse
+        icon: mdi:music-note
+        tap_action:
+          action: call-service
+          service: script.nabaztag_dance
+      - type: button
+        name: Nez
+        icon: mdi:led-on
+        tap_action:
+          action: call-service
+          service: script.nabaztag_set_nose
+      - type: button
+        name: Météo
+        icon: mdi:weather-partly-cloudy
+        tap_action:
+          action: call-service
+          service: script.nabaztag_set_weather
+  - type: entities
+    title: 🗣️ Nabaztag - Parole
+    entities:
+      - entity: input_text.nabaztag_message
+        name: Message à dire
+  - type: button
+    name: Faire parler
+    icon: mdi:chat
+    tap_action:
+      action: call-service
+      service: script.nabaztag_talk
