@@ -1,0 +1,95 @@
+# Carte lovelace de configuration du nabaztag
+type: vertical-stack
+cards:
+  - type: markdown
+    content: |
+      # 🐰 **Configuration Setup Nabaztag**
+      ---
+  - type: entities
+    title: 🌐 Connexion
+    show_header_toggle: false
+    entities:
+      - entity: input_text.nabaztag_ip_address
+        name: Adresse IP
+        icon: mdi:ip-network
+      - type: button
+        name: 🔍 Test Connexion
+        icon: mdi:connection
+        tap_action:
+          action: call-service
+          service: script.nabaztag_test_connection
+  - type: entities
+    title: 📍 Localisation & Langue
+    show_header_toggle: false
+    entities:
+      - entity: input_text.nabaztag_latitude
+        name: Latitude (j)
+        icon: mdi:latitude
+      - entity: input_text.nabaztag_longitude
+        name: Longitude (k)
+        icon: mdi:longitude
+      - entity: input_select.nabaztag_language
+        name: Langue (l)
+        icon: mdi:translate
+      - entity: input_select.nabaztag_timezone_city
+        name: Ville/Timezone (c)
+        icon: mdi:city
+  - type: entities
+    title: 🕐 Configuration Horaires
+    show_header_toggle: false
+    entities:
+      - entity: input_boolean.nabaztag_daylight_saving
+        name: Heure d'été (d)
+        icon: mdi:weather-sunny
+      - entity: input_number.nabaztag_wake_hour
+        name: Heure de réveil (w)
+        icon: mdi:alarm
+      - entity: input_number.nabaztag_sleep_hour
+        name: Heure de coucher (b)
+        icon: mdi:sleep
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - type: button
+        name: 📤 Appliquer Configuration Setup
+        icon: mdi:upload
+        action_name: APPLIQUER
+        tap_action:
+          action: call-service
+          service: script.nabaztag_apply_setup
+  - type: markdown
+    content: >
+      ### 🔗 **URL de configuration générée:**
+
+      ```
+
+      {{ states('input_text.nabaztag_ip_address') }}/setup?j={{
+      states('input_text.nabaztag_latitude') }}&k={{
+      states('input_text.nabaztag_longitude') }}&l={{
+      states('input_select.nabaztag_language') }}&c={{
+      states('input_select.nabaztag_timezone_city') }}&d={{ 1 if
+      is_state('input_boolean.nabaztag_daylight_saving', 'on') else 0 }}&w={{
+      states('input_number.nabaztag_wake_hour') }}&b={{
+      states('input_number.nabaztag_sleep_hour') }}
+
+      ```
+
+
+      ### 📋 **Paramètres:**
+
+      - **j** = {{ states('input_text.nabaztag_latitude') }} (Latitude)
+
+      - **k** = {{ states('input_text.nabaztag_longitude') }} (Longitude)  
+
+      - **l** = {{ states('input_select.nabaztag_language') }} (Langue)
+
+      - **c** = {{ states('input_select.nabaztag_timezone_city') }}
+      (Ville/Timezone)
+
+      - **d** = {{ 1 if is_state('input_boolean.nabaztag_daylight_saving', 'on')
+      else 0 }} (Heure d'été)
+
+      - **w** = {{ states('input_number.nabaztag_wake_hour') }} (Réveil)
+
+      - **b** = {{ states('input_number.nabaztag_sleep_hour') }} (Coucher)
+

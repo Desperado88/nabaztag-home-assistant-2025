@@ -28,7 +28,7 @@ input_text:
 #------------------------------------------------------------------------------
   nabaztag_ip_address:
     name: Nabaztag Ip Address
-    initial: http://192.168.99.15/ # Indiquer ici l'ip du nabaztag
+    initial: http://192.168.0.13/ # Indiquer ici l'ip du nabaztag précèder de "http://" et terminer par "/", exemple: http://192.168.0.13/
   nabaztag_tts_language:
     name: Nabaztag Tts Language
     initial: fr # Changer la langue si besoin
@@ -397,104 +397,129 @@ rest_command:
 #------------------------------------------------------------------------------
   # Commandes de base
   nabaztag_update:
-    url: "{{ states('input_text.nabaztag_ip_address') }}update"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/update"
     method: GET
     timeout: 10
 
   nabaztag_reboot:
-    url: "{{ states('input_text.nabaztag_ip_address') }}reboot"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/reboot"
     method: GET
     timeout: 10
 
   nabaztag_stop:
-    url: "{{ states('input_text.nabaztag_ip_address') }}stop"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/stop"
     method: GET
     timeout: 10
 
   nabaztag_sleep:
-    url: "{{ states('input_text.nabaztag_ip_address') }}sleep"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/sleep"
     method: GET
     timeout: 10
 
   nabaztag_wakeup:
-    url: "{{ states('input_text.nabaztag_ip_address') }}wakeup"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/wakeup"
+    method: GET
+    timeout: 10
+
+  nabaztag_clear:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/clear"
+    method: GET
+    timeout: 10
+
+  nabaztag_gettime:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/gettime"
+    method: GET
+    timeout: 10
+
+  nabaztag_abort:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/abort"
+    method: GET
+    timeout: 10
+
+  nabaztag_ministop:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/ministop"
     method: GET
     timeout: 10
 
   # Commandes Tai Chi
   nabaztag_taichi_on:
-    url: "{{ states('input_text.nabaztag_ip_address') }}taichi?v=1000"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/taichi?v=1000"
     method: GET
     timeout: 10
 
   nabaztag_taichi_off:
-    url: "{{ states('input_text.nabaztag_ip_address') }}taichi?v=0"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/taichi?v=0"
     method: GET
     timeout: 10
 
-  nabaztag_taichi_slow:
-    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=taichi_min"
-    method: GET
-    timeout: 10
-
-  nabaztag_taichi_fast:
-    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=taichi_max"
+  nabaztag_taichi:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/taichi?v={{ speed }}"
     method: GET
     timeout: 10
 
   # Commandes oreilles
   nabaztag_move_left_ear:
-    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/ears.cgi"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/left?p={{ position }}&d=0"
     method: GET
     timeout: 10
-    payload: "left={{ left_position }}"
 
   nabaztag_move_right_ear:
-    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/ears.cgi"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/right?p={{ position }}&d=0"
     method: GET
     timeout: 10
-    payload: "right={{ right_position }}"
-
-  nabaztag_move_both_ears:
-    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/ears.cgi"
-    method: GET
-    timeout: 10
-    payload: "left={{ left_position }}&right={{ right_position }}"
 
   # Commandes nez
   nabaztag_set_nose:
-    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/leds.cgi"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/nose?v={{ state }}"
     method: GET
     timeout: 10
     payload: "led=nose&color={{ nose_color }}"
 
   # Commandes météo
   nabaztag_set_weather:
-    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/weather_display.cgi"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/weather?v={{ weather }}"
     method: GET
     timeout: 10
     payload: "icon={{ weather_icon }}"
 
   # Commandes radio
   nabaztag_play_radio:
-    url: "{{ states('input_text.nabaztag_ip_address') }}play"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/play"
     method: GET
     timeout: 10
     payload: "u={{ radio_url }}"
 
   # Commandes sons
   nabaztag_communication:
-    url: "{{ states('input_text.nabaztag_ip_address') }}communication"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/communication"
     method: GET
     timeout: 10
 
   nabaztag_ack:
-    url: "{{ states('input_text.nabaztag_ip_address') }}ack"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/ack"
     method: GET
     timeout: 10
 
   nabaztag_surprise:
-    url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/choregraphy.cgi?chor=surprise"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/surprise"
+    method: GET
+    timeout: 10
+
+  # Bourse (paramétrique)
+  nabaztag_set_stock:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/stock?v={{ level }}"
+    method: GET
+    timeout: 10
+
+  # Trafic (paramétrique)
+  nabaztag_set_traffic:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/traffic?v={{ level }}"
+    method: GET
+    timeout: 10
+
+  # Pollution (paramétrique)
+  nabaztag_set_pollution:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/pollution?v={{ level }}"
     method: GET
     timeout: 10
 
@@ -505,53 +530,62 @@ rest_command:
     timeout: 10
     payload: "lang={{ language }}"
 
+  # Langue (paramétrique)
+  nabaztag_set_lang:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/lang?v={{ language }}"
+    method: GET
+    timeout: 10
+
   nabaztag_set_timezone:
     url: "{{ states('input_text.nabaztag_ip_address') }}cgi-bin/config.cgi"
     method: GET
     timeout: 10
     payload: "timezone={{ timezone }}"
 
+  # Fuseau horaire (paramétrique)
+  nabaztag_set_time_offset:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/time?v={{ offset_minutes }}"
+    method: GET
+    timeout: 10
+
+  # Parole (endpoint say)
+  nabaztag_say:
+    url: "{{ states('input_text.nabaztag_ip_address') }}/say?text={{ states('input_text.nabaztag_message') | urlencode }}"
+    method: GET
+    timeout: 30
+
 #------------------------------------------------------------------------------
 script:
 #------------------------------------------------------------------------------
   nabaztag_talk:
-    alias: Nabaztag Talk
+    alias: "Nabaztag - Parler"
     sequence:
-      - condition: state
-        entity_id: input_boolean.nabaztaglife
-        state: "on"
-      - action: tts.google_translate_say
-        target:
-          entity_id: media_player.nabaztag
-        data:
-          message: "{{ states('input_text.nabaztag_message') }}"
-          language: "{{ states('input_text.nabaztag_tts_language') }}"
-          cache: true
-      - delay:
-          seconds: 1
-      - action: tts.clear_cache
+      - action: rest_command.nabaztag_say
 
   nabaztag_move_left_ear:
     alias: Move Left Ear
     sequence:
       - action: rest_command.nabaztag_move_left_ear
         data:
-          left_position: "{{ states('input_select.nabaztag_ear_position') }}"
+          position: "{{ states('input_select.nabaztag_ear_position') }}"
 
   nabaztag_move_right_ear:
     alias: Move Right Ear
     sequence:
       - action: rest_command.nabaztag_move_right_ear
         data:
-          right_position: "{{ states('input_select.nabaztag_ear_position') }}"
+          position: "{{ states('input_select.nabaztag_ear_position') }}"
 
   nabaztag_move_both_ears:
-    alias: Move Both Ears
+    alias: "Nabaztag - Les deux oreilles"
     sequence:
-      - action: rest_command.nabaztag_move_both_ears
+      - action: rest_command.nabaztag_move_left_ear
         data:
-          left_position: "{{ states('input_select.nabaztag_ear_position') }}"
-          right_position: "{{ states('input_select.nabaztag_ear_position') }}"
+          position: "{{ states('input_select.nabaztag_ear_position') }}"
+      - delay: "00:00:01"
+      - action: rest_command.nabaztag_move_right_ear
+        data:
+          position: "{{ states('input_select.nabaztag_ear_position') }}"
 
   nabaztag_set_nose:
     alias: Set Nose Color
@@ -581,10 +615,12 @@ script:
       - repeat:
           count: 3
           sequence:
-            - action: rest_command.nabaztag_move_both_ears
+            - action: rest_command.nabaztag_move_left_ear
               data:
-                left_position: "{{ range(0, 11) | random }}"
-                right_position: "{{ range(0, 11) | random }}"
+                position: "{{ range(0, 11) | random }}"
+            - action: rest_command.nabaztag_move_right_ear
+              data:
+                position: "{{ range(0, 11) | random }}"
             - delay:
                 milliseconds: 500
             - action: rest_command.nabaztag_set_nose
@@ -816,17 +852,6 @@ automation:
         default:
           - action: rest_command.nabaztag_stop
 
-  # Gestion des changements de position des oreilles
-  - alias: "Nabaztag Handle Ear Position Change"
-    id: nabaztag_handle_ear_position
-    trigger:
-      - trigger: state
-        entity_id: input_select.nabaztag_ear_position
-    action:
-      - action: script.turn_on
-        target:
-          entity_id: script.nabaztag_move_both_ears
-
   # Gestion des changements d'état du nez
   - alias: "Nabaztag Handle Nose State Change"
     id: nabaztag_handle_nose_state
@@ -869,20 +894,16 @@ automation:
     action:
       - choose:
           - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_taichi
-                state: "Slow"
+              - condition: template
+                value_template: "{{ is_state('input_select.nabaztag_taichi', 'Off') == false }}"
             sequence:
-              - action: rest_command.nabaztag_taichi_slow
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.nabaztag_taichi
-          - conditions:
-              - condition: state
-                entity_id: input_select.nabaztag_taichi
-                state: "Fast"
-            sequence:
-              - action: rest_command.nabaztag_taichi_fast
+              - action: rest_command.nabaztag_taichi
+                data:
+                  speed: >
+                    {% if is_state('input_select.nabaztag_taichi', 'Slow') %}40
+                    {% elif is_state('input_select.nabaztag_taichi', 'Fast') %}255
+                    {% else %}80
+                    {% endif %}
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.nabaztag_taichi
@@ -1172,3 +1193,5 @@ template:
       - action: script.nabaztag_talk
         data:
           message: "Bonne nuit ! Je vais me reposer maintenant."
+
+# FIN DU FICHIER
