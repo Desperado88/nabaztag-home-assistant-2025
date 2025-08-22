@@ -1,0 +1,379 @@
+# ==========================================
+# AUTOMATISATION NABAZTAG VIVANT
+# Active de 8h à 17h avec actions aléatoires
+# Compatible avec vos rest_command existantes
+# ==========================================
+
+# Configuration input_text pour l'IP (à ajouter si pas déjà fait)
+# input_text:
+#   nabaztag_ip_address:
+#     name: "Adresse IP Nabaztag"
+#     initial: "http://192.168.0.13"  # Remplacez par l'IP de votre Nabaztag
+
+# Automatisation principale - Démarrage à 8h
+automation:
+  - id: nabaztag_start_day
+    alias: "Nabaztag - Démarrer la journée"
+    trigger:
+      - trigger: time
+        at: "08:00:00"
+    condition:
+      - condition: time
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+          - sun
+    action:
+      - action: script.nabaztag_wake_up
+      - delay: "00:02:00"
+      - action: automation.turn_on
+        target:
+          entity_id: automation.nabaztag_random_actions
+
+  # Automatisation - Arrêt à 17h
+  - id: nabaztag_end_day
+    alias: "Nabaztag - Terminer la journée"
+    trigger:
+      - trigger: time
+        at: "22:00:00"
+    action:
+      - action: automation.turn_off
+        target:
+          entity_id: automation.nabaztag_random_actions
+      - action: script.nabaztag_sleep_sequence
+
+  # Automatisation - Actions aléatoires (toutes les 15-45 minutes)
+  - id: nabaztag_random_actions
+    alias: "Nabaztag - Actions aléatoires"
+    trigger:
+      - trigger: time_pattern
+        minutes: "/15"
+    condition:
+      - condition: time
+        after: "08:00:00"
+        before: "17:00:00"
+      - condition: template
+        value_template: "{{ (range(1,4) | random) == 1 }}" # 33% de chance
+    action:
+      - action: script.nabaztag_random_action
+
+        # Actions aux heures pleines
+  - id: nabaztag_hourly_action
+    alias: "Nabaztag - Action horaire"
+    trigger:
+      - trigger: time_pattern
+        minutes: 0
+    condition:
+      - condition: time
+        after: "08:00:00"
+        before: "17:00:00"
+    action:
+      - action: script.nabaztag_announce_time
+      - delay: "00:00:05"
+      - action: script.nabaztag_random_action
+
+  # Pause déjeuner (12h)
+  - id: nabaztag_lunch_break
+    alias: "Nabaztag - Pause déjeuner"
+    trigger:
+      - trigger: time
+        at: "12:00:00"
+    action:
+      - action: rest_command.nabaztag_say
+        data:
+          message: "C'est l'heure du déjeuner ! Bon appétit à tous !"
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 1
+          nose_color: "red"
+      - delay: "00:00:03"
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 1
+          nose_color: "green"
+
+  # Retour de pause déjeuner (13h)
+  - id: nabaztag_back_from_lunch
+    alias: "Nabaztag - Retour déjeuner"
+    trigger:
+      - trigger: time
+        at: "13:00:00"
+    action:
+      - action: rest_command.nabaztag_say
+        data:
+          message: "J'espère que vous avez bien mangé ! On reprend !"
+      - action: script.nabaztag_stretch
+# ==========================================
+# SCRIPTS PRINCIPAUX
+# ==========================================
+
+script:
+  # Réveil du matin
+  nabaztag_wake_up:
+    alias: "Nabaztag - Réveil"
+    sequence:
+      - action: rest_command.nabaztag_wakeup
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_taichi
+        data:
+          speed: 500  # Vitesse moyenne
+      - delay: "00:00:03"
+      - action: rest_command.nabaztag_move_left_ear
+        data:
+          position: 8
+      - action: rest_command.nabaztag_move_right_ear
+        data:
+          position: 8
+      - delay: "00:00:01"
+      - action: rest_command.nabaztag_say
+        data:
+          message: "Bonjour ! Je me réveille pour une nouvelle journée !"
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 1
+          nose_color: "green"
+
+  # Endormissement du soir
+  nabaztag_sleep_sequence:
+    alias: "Nabaztag - Dodo"
+    sequence:
+      - action: rest_command.nabaztag_say
+        data:
+          message: "Bonne soirée ! Je vais me reposer maintenant."
+      - delay: "00:00:03"
+      - action: rest_command.nabaztag_taichi
+        data:
+          speed: 100  # Vitesse lente
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_move_left_ear
+        data:
+          position: 0
+      - action: rest_command.nabaztag_move_right_ear
+        data:
+          position: 0
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 0
+          nose_color: "off"
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_sleep
+
+  # Action aléatoire
+  nabaztag_random_action:
+    alias: "Nabaztag - Action aléatoire"
+    sequence:
+      - variables:
+          action_type: "{{ range(1, 8) | random }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 1 }}"
+            sequence:
+              - action: script.nabaztag_tell_joke
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 2 }}"
+            sequence:
+              - action: script.nabaztag_announce_weather
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 3 }}"
+            sequence:
+              - action: script.nabaztag_announce_time
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 4 }}"
+            sequence:
+              - action: script.nabaztag_stretch
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 5 }}"
+            sequence:
+              - action: script.nabaztag_yawn
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 6 }}"
+            sequence:
+              - action: script.nabaztag_ear_dance
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 7 }}"
+            sequence:
+              - action: script.nabaztag_random_sound
+
+  # Dire une blague
+  nabaztag_tell_joke:
+    alias: "Nabaztag - Raconter une blague"
+    sequence:
+      - variables:
+          joke: >
+            {% set jokes = [
+              "Pourquoi les plongeurs plongent-ils toujours en arrière et jamais en avant ? Parce que sinon, ils tombent dans le bateau !",
+              "Que dit un escargot quand il croise une limace ? Regarde, un nudiste !",
+              "Qu'est-ce qui est jaune et qui attend ? Jonathan !",
+              "Pourquoi les poissons n'aiment pas jouer au tennis ? Parce qu'ils ont peur du filet !",
+              "Comment appelle-t-on un chat tombé dans un pot de peinture le jour de Noël ? Un chat-mallow !",
+              "Que dit un informaticien quand il se noie ? F1 ! F1 !",
+              "Pourquoi les dinosaures ne parlent pas ? Parce qu'ils sont morts !",
+              "Comment fait-on pour allumer un barbecue breton ? On utilise des breizh !",
+              "Qu'est-ce qui est transparent et qui sent la carotte ? Un pet de lapin !",
+              "Pourquoi Mickey Mouse ? Parce que Mario Bros !"
+            ] %}
+            {{ jokes | random }}
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 1
+          nose_color: "orange"
+      - action: rest_command.nabaztag_communication
+      - delay: "00:00:01"
+      - action: rest_command.nabaztag_say
+        data:
+          message: "{{ joke }}"
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 1
+          nose_color: "green"
+
+  # Annoncer la météo
+  nabaztag_announce_weather:
+    alias: "Nabaztag - Annoncer la météo"
+    sequence:
+      - action: rest_command.nabaztag_set_weather
+        data:
+          weather: "{{ ['sun', 'clouds', 'rain'] | random }}"
+          weather_icon: "{{ ['sun', 'clouds', 'rain'] | random }}"
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_say
+        data:
+          message: >
+            {% set weather_messages = [
+              "Il fait beau aujourd'hui ! Parfait pour sortir !",
+              "Le temps est nuageux mais agréable !",
+              "Il pleut un peu, n'oubliez pas votre parapluie !",
+              "Quelle belle journée pour une promenade !",
+              "Le ciel est dégagé, profitez-en bien !"
+            ] %}
+            {{ weather_messages | random }}
+
+  # Annoncer l'heure
+  nabaztag_announce_time:
+    alias: "Nabaztag - Annoncer l'heure"
+    sequence:
+      - action: rest_command.nabaztag_ack
+      - delay: "00:00:01"
+      - action: rest_command.nabaztag_say
+        data:
+          message: "Il est {{ now().strftime('%H heures %M') }}"
+
+  # Étirement (Taichi)
+  nabaztag_stretch:
+    alias: "Nabaztag - S'étirer"
+    sequence:
+      - action: rest_command.nabaztag_say
+        data:
+          message: "{{ ['Allez, un petit étirement !', 'Time de se dégourdir !', 'Un peu d exercice !'] | random }}"
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_taichi
+        data:
+          speed: 1000  # Vitesse maximale
+      - delay: "00:00:05"
+      - action: rest_command.nabaztag_taichi
+        data:
+          speed: 500   # Retour vitesse normale
+
+  # Bâillement
+  nabaztag_yawn:
+    alias: "Nabaztag - Bâiller"
+    sequence:
+      - action: rest_command.nabaztag_say
+        data:
+          message: "{{ ['Haaaaa... petit bâillement !', 'Je suis un peu fatigué...', 'Hooooo... excusez-moi !'] | random }}"
+      - action: rest_command.nabaztag_move_left_ear
+        data:
+          position: 0
+      - action: rest_command.nabaztag_move_right_ear
+        data:
+          position: 0
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_move_left_ear
+        data:
+          position: 16
+      - action: rest_command.nabaztag_move_right_ear
+        data:
+          position: 16
+      - delay: "00:00:01"
+      - action: rest_command.nabaztag_move_left_ear
+        data:
+          position: 8
+      - action: rest_command.nabaztag_move_right_ear
+        data:
+          position: 8
+
+  # Danse des oreilles
+  nabaztag_ear_dance:
+    alias: "Nabaztag - Danse des oreilles"
+    sequence:
+      - action: rest_command.nabaztag_communication
+      - repeat:
+          count: 5
+          sequence:
+            - action: rest_command.nabaztag_move_left_ear
+              data:
+                position: "{{ range(0, 17) | random }}"
+            - action: rest_command.nabaztag_move_right_ear
+              data:
+                position: "{{ range(0, 17) | random }}"
+            - delay: "00:00:00.5"
+      - action: rest_command.nabaztag_move_left_ear
+        data:
+          position: 8
+      - action: rest_command.nabaztag_move_right_ear
+        data:
+          position: 8
+
+  # Son aléatoire
+  nabaztag_random_sound:
+    alias: "Nabaztag - Son aléatoire"
+    sequence:
+      - variables:
+          sound_choice: "{{ range(1, 4) | random }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ sound_choice == 1 }}"
+            sequence:
+              - action: rest_command.nabaztag_communication
+          - conditions:
+              - condition: template
+                value_template: "{{ sound_choice == 2 }}"
+            sequence:
+              - action: rest_command.nabaztag_ack
+          - conditions:
+              - condition: template
+                value_template: "{{ sound_choice == 3 }}"
+            sequence:
+              - action: rest_command.nabaztag_ministop
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 1
+          nose_color: "{{ ['red', 'orange', 'green'] | random }}"
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 1
+          nose_color: "green"
+
+  # Action surprise
+  nabaztag_surprise_action:
+    alias: "Nabaztag - Surprise"
+    sequence:
+      - action: rest_command.nabaztag_surprise
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_say
+        data:
+          message: "{{ ['Surprise !', 'Coucou !', 'Hello !', 'Tada !'] | random }}"
