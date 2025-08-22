@@ -28,7 +28,7 @@ input_text:
 #------------------------------------------------------------------------------
   nabaztag_ip_address:
     name: Nabaztag Ip Address
-    initial: http://192.168.0.13 # Indiquer ici l'ip du nabaztag précèder de "http://", exemple: http://192.168.0.13
+    initial: http://192.168.99.15 # Indiquer ici l'ip du nabaztag précèder de "http://", exemple: http://192.168.0.13
   nabaztag_tts_language:
     name: Nabaztag Tts Language
     initial: fr # Changer la langue si besoin
@@ -597,7 +597,7 @@ rest_command:
 
   # Parole (endpoint say)
   nabaztag_say:
-    url: "{{ states('input_text.nabaztag_ip_address') }}/say?text={{ states('input_text.nabaztag_message') | urlencode }}"
+    url: "{{ states('input_text.nabaztag_ip_address') }}/say?text={{ message | urlencode }}"
     method: GET
     timeout: 30
 
@@ -611,8 +611,14 @@ script:
 #------------------------------------------------------------------------------
   nabaztag_talk:
     alias: "Nabaztag - Parler"
+    fields:
+      message:
+        description: "Le message à faire dire au Nabaztag"
+        example: "Bonjour, comment allez-vous ?"
     sequence:
       - action: rest_command.nabaztag_say
+        data:
+          message: "{{ message | default(states('input_text.nabaztag_message')) }}"
 
   nabaztag_move_left_ear:
     alias: Move Left Ear
@@ -1232,6 +1238,27 @@ template:
           weather_display: "{{ states('input_select.nabaztag_weather') }}"
           language: "{{ states('input_select.nabaztag_language') }}"
           timezone: "{{ states('input_select.nabaztag_time_zone') }}"
+
+  - trigger:
+      - trigger: state
+        entity_id: input_boolean.nabaztaglife
+        to: 'on'
+    action:
+      - action: script.nabaztag_talk
+        data:
+          message: "Bonjour ! Je me réveille et suis prêt à vous servir !"
+      - delay:
+          seconds: 2
+      - action: script.nabaztag_dance
+
+  - trigger:
+      - trigger: state
+        entity_id: input_boolean.nabaztaglife
+        to: 'off'
+    action:
+      - action: script.nabaztag_talk
+        data:
+          message: "Bonne nuit ! Je vais me reposer maintenant."
 
 #------------------------------------------------------------------------------
 # NOTIFICATION POUR ÉVÉNEMENTS IMPORTANTS
