@@ -1,0 +1,144 @@
+type: vertical-stack
+cards:
+  - type: entities
+    title: 🐰 Nabaztag — Réglages
+    entities:
+      - entity: input_select.nabaztag_ear_position
+        name: Position des oreilles
+      - entity: input_select.nabaztag_nose_state
+        name: État du nez
+      - entity: input_select.nabaztag_weather
+        name: Météo
+      - entity: input_text.nabaztag_message
+        name: Message à dire
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Vie
+        icon: mdi:carrot
+        entity: switch.nabaztaglife
+        tap_action:
+          action: toggle
+      - type: button
+        name: Tai Chi
+        icon: mdi:meditation
+        entity: switch.nabaztag_taichi
+        tap_action:
+          action: toggle
+  - type: horizontal-stack
+    cards:
+      - show_name: true
+        show_icon: true
+        type: button
+        name: Oreille gauche
+        icon: mdi:arrow-left-bold
+        tap_action:
+          action: call-service
+          service: script.nabaztag_move_left_ear
+        entity: script.nabaztag_move_left_ear
+      - type: button
+        name: Oreille droite
+        icon: mdi:arrow-right-bold
+        tap_action:
+          action: call-service
+          service: script.nabaztag_move_right_ear
+        entity: script.nabaztag_move_right_ear
+      - type: button
+        name: Les deux
+        icon: mdi:sync
+        tap_action:
+          action: call-service
+          service: script.nabaztag_move_both_ears
+        entity: script.nabaztag_move_both_ears
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Nez
+        icon: mdi:led-on
+        entity: switch.nabaztag_nose
+        tap_action:
+          action: call-service
+          service: switch.toggle
+          target:
+            entity_id: switch.nabaztag_nose
+      - type: button
+        name: Météo
+        icon: mdi:weather-partly-cloudy
+        tap_action:
+          action: call-service
+          service: script.nabaztag_set_weather
+        entity: input_select.nabaztag_weather
+      - type: button
+        name: Danse
+        icon: mdi:music-note
+        tap_action:
+          action: call-service
+          service: script.nabaztag_dance
+        entity: script.nabaztag_dance
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Surprise
+        icon: mdi:gesture-tap
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_surprise
+      - type: button
+        name: Comm.
+        icon: mdi:message-text
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_communication
+      - type: button
+        name: Ack
+        icon: mdi:check-decagram
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_ack
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Réveil
+        icon: mdi:alarm
+        tap_action:
+          action: call-service
+          service: script.nabaztag_wakeup
+      - type: button
+        name: Dodo
+        icon: mdi:sleep
+        tap_action:
+          action: call-service
+          service: script.nabaztag_sleep
+      - type: button
+        name: Stop
+        icon: mdi:stop
+        tap_action:
+          action: call-service
+          service: script.nabaztag_stop
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Update
+        icon: mdi:update
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_update
+      - type: button
+        name: Reboot
+        icon: mdi:restart
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_reboot
+      - type: button
+        name: Clear
+        icon: mdi:broom
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_clear
+  - type: button
+    name: Faire parler
+    icon: mdi:chat
+    tap_action:
+      action: call-service
+      service: script.nabaztag_talk
+    entity: script.nabaztag_talk

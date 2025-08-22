@@ -28,7 +28,7 @@ input_text:
 #------------------------------------------------------------------------------
   nabaztag_ip_address:
     name: Nabaztag Ip Address
-    initial: http://192.168.0.13/ # Indiquer ici l'ip du nabaztag précèder de "http://" et terminer par "/", exemple: http://192.168.0.13/
+    initial: http://192.168.0.13 # Indiquer ici l'ip du nabaztag précèder de "http://", exemple: http://192.168.0.13
   nabaztag_tts_language:
     name: Nabaztag Tts Language
     initial: fr # Changer la langue si besoin
@@ -232,7 +232,7 @@ input_number:
     name: Previous Bitcoin Exchange Rate
     initial: 0
     min: 0
-    max: 100000
+    max: 500000
     step: 0.01
     mode: box
     icon: mdi:currency-btc
@@ -241,7 +241,7 @@ input_number:
     name: Bitcoin Value Difference
     initial: 0
     min: -100000
-    max: 100000
+    max: 500000
     step: 0.01
     mode: box
     icon: mdi:currency-btc
@@ -308,6 +308,12 @@ input_select:
       - "8"
       - "9"
       - "10"
+      - "11"
+      - "12"
+      - "13"
+      - "14"
+      - "15"
+      - "16"
     initial: "0"
     icon: mdi:ear-hearing
 
