@@ -59,16 +59,22 @@ input_text:
     min: 1
     max: 255
     mode: text
+  # Config
+  nabaztag_latitude:
+    name: "Latitude (j)"
+    
+  nabaztag_longitude:
+    name: "Longitude (k)" 
 
 #------------------------------------------------------------------------------
 sensor:
 #------------------------------------------------------------------------------
-# Weather Sensor - Remplacé par l'intégration météo native
-# Utiliser l'intégration Open Weather Map ou météo-france via l'interface
-# {{ states('weather.home') }} >>> État météo
-# Configurer votre intégration météo préférée dans Configuration > Intégrations
+  # Weather Sensor - Remplacé par l'intégration météo native
+  # Utiliser l'intégration Open Weather Map ou météo-france via l'interface
+  # {{ states('weather.home') }} >>> État météo
+  # Configurer votre intégration météo préférée dans Configuration > Intégrations
 
-# Stocks Sensor - Bitcoin remplacé par REST sensor
+  # Stocks Sensor - Bitcoin remplacé par REST sensor
   - platform: rest
     name: Bitcoin Exchange Rate
     resource: https://api.coinbase.com/v2/exchange-rates?currency=BTC
@@ -77,7 +83,7 @@ sensor:
     scan_interval: 300
     icon: mdi:currency-btc
 
-# Traffic Sensor - Google Maps Travel Time mis à jour
+  # Traffic Sensor - Google Maps Travel Time mis à jour
   - platform: google_travel_time
     api_key: !secret google_distance_matrix_api_key
     name: Home To Work
@@ -87,7 +93,7 @@ sensor:
     unit_system: metric
     scan_interval: 300
 
-# Template sensors
+  # Template sensors
   - platform: template
     sensors:
       traffic_status:
@@ -114,7 +120,7 @@ sensor:
             mdi:car-brake-hold
           {% endif %}
 
-# Pollution Sensor - Remplacé par REST sensor pour OpenWeather Air Pollution API
+  # Pollution Sensor - Remplacé par REST sensor pour OpenWeather Air Pollution API
   - platform: rest
     name: Air Quality Index
     resource_template: "https://api.openweathermap.org/data/2.5/air_pollution?lat={{ state_attr('zone.home', 'latitude') }}&lon={{ state_attr('zone.home', 'longitude') }}&appid={{ states('input_text.openweather_api_key') }}"
@@ -214,7 +220,11 @@ input_boolean:
     name: Nabaztag Is Awake
     initial: off
     icon: mdi:sleep-off
-
+  # Config
+  nabaztag_daylight_saving:
+    name: "Heure d'été (d)"
+    initial: true
+    
 #------------------------------------------------------------------------------
 input_number:
 #------------------------------------------------------------------------------
@@ -244,6 +254,22 @@ input_number:
     step: 1
     mode: box
     icon: mdi:clock
+  # Config
+  nabaztag_wake_hour:
+    name: "Heure de réveil (w)"
+    min: 0
+    max: 23
+    step: 1
+    initial: 7
+    unit_of_measurement: "h"
+
+  nabaztag_sleep_hour:
+    name: "Heure de coucher (b)"
+    min: 0
+    max: 23
+    step: 1
+    initial: 22
+    unit_of_measurement: "h"
 
 #------------------------------------------------------------------------------
 input_select:
@@ -370,17 +396,6 @@ input_select:
     initial: "Off"
     icon: mdi:radio
 
-  nabaztag_language:
-    name: Language
-    options:
-      - "fr"
-      - "en"
-      - "de"
-      - "es"
-      - "it"
-    initial: "fr"
-    icon: mdi:translate
-
   nabaztag_time_zone:
     name: Time Zone
     options:
@@ -391,6 +406,32 @@ input_select:
       - "America/New_York"
     initial: "Europe/Paris"
     icon: mdi:clock-outline
+  # Config
+  nabaztag_language:
+    name: Language
+    options:
+      - "fr"
+      - "en"
+      - "de"
+      - "es"
+      - "it"
+    initial: "fr"
+    icon: mdi:translate
+    
+  nabaztag_timezone_city:
+    name: "Ville/Timezone (c)"
+    options:
+      - "PAR"  # Paris
+      - "LON"  # Londres
+      - "BER"  # Berlin
+      - "ROM"  # Rome
+      - "MAD"  # Madrid
+      - "AMS"  # Amsterdam
+      - "BRU"  # Bruxelles
+      - "ZUR"  # Zurich
+      - "VIE"  # Vienne
+      - "LIS"  # Lisbonne
+    initial: "PAR"
 
 #------------------------------------------------------------------------------
 rest_command:
@@ -554,6 +595,11 @@ rest_command:
     method: GET
     timeout: 30
 
+  # Config
+shell_command:
+  nabaztag_setup: >
+    curl -s "http://{{ states('input_text.nabaztag_ip_address') }}/setup?j={{ states('input_text.nabaztag_latitude') }}&k={{ states('input_text.nabaztag_longitude') }}&l={{ states('input_select.nabaztag_language') }}&c={{ states('input_select.nabaztag_timezone_city') }}&d={{ 1 if is_state('input_boolean.nabaztag_daylight_saving', 'on') else 0 }}&w={{ states('input_number.nabaztag_wake_hour') | int }}&b={{ states('input_number.nabaztag_sleep_hour') | int }}"
+
 #------------------------------------------------------------------------------
 script:
 #------------------------------------------------------------------------------
@@ -704,6 +750,17 @@ script:
             Le trajet vers le travail prendra {{ states('sensor.home_to_work') }} minutes.
             La qualité de l'air est {{ states('sensor.air_quality_status') }}.
             Bonne journée !
+  # Config
+  nabaztag_apply_setup:
+    alias: "Nabaztag - Appliquer Configuration Setup"
+    sequence:
+      - action: homeassistant.turn_on
+        target:
+          entity_id: shell_command.nabaztag_setup
+      - action: notify.persistent_notification
+        data:
+          title: "Nabaztag Configuration"
+          message: "Configuration setup appliquée"
 
 #------------------------------------------------------------------------------
 switch:
