@@ -22,6 +22,7 @@ The guide for using WPA2 wifi (in french):
   https://nabaztag.forumactif.fr/t15437-guide-ressusciter-son-nabaztagtag-v2-avec-upgrade-en-wpa-2-et-openjabnab
 
 source: https://community.home-assistant.io/t/nabaztag-tag-the-smart-rabbit-is-back/41696
+        https://github.com/vladger/NabaztagGPT
 
 ---
 
@@ -51,3 +52,4 @@ Le guide pour mettre à jour votre Nabaztag:tag pour utiliser le WPA2 :
   https://nabaztag.forumactif.fr/t15437-guide-ressusciter-son-nabaztagtag-v2-avec-upgrade-en-wpa-2-et-openjabnab
 
 source : https://community.home-assistant.io/t/nabaztag-tag-the-smart-rabbit-is-back/41696
+         https://github.com/vladger/NabaztagGPT

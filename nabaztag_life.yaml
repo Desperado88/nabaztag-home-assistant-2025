@@ -4,12 +4,6 @@
 # Compatible avec vos rest_command existantes
 # ==========================================
 
-# Configuration input_text pour l'IP (à ajouter si pas déjà fait)
-# input_text:
-#   nabaztag_ip_address:
-#     name: "Adresse IP Nabaztag"
-#     initial: "http://192.168.0.13"  # Remplacez par l'IP de votre Nabaztag
-
 # Automatisation principale - Démarrage à 8h
 automation:
   - id: nabaztag_start_day
@@ -85,7 +79,7 @@ automation:
     action:
       - action: rest_command.nabaztag_say
         data:
-          message: "C'est l'heure du déjeuner ! Bon appétit à tous !"
+          message: "C'est%20l'heure%20du%20d%C3%A9jeuner%20!%20Bon%20app%C3%A9tit%20%C3%A0%20tous%20!"
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
@@ -105,7 +99,7 @@ automation:
     action:
       - action: rest_command.nabaztag_say
         data:
-          message: "J'espère que vous avez bien mangé ! On reprend !"
+          message: "J'esp%C3%A8re%20que%20vous%20avez%20bien%20mang%C3%A9%20!%20On%20reprend%20!"
       - action: script.nabaztag_stretch
 # ==========================================
 # SCRIPTS PRINCIPAUX
@@ -131,7 +125,7 @@ script:
       - delay: "00:00:01"
       - action: rest_command.nabaztag_say
         data:
-          message: "Bonjour ! Je me réveille pour une nouvelle journée !"
+          message: "Bonjour%20!%20Je%20me%20r%C3%A9veille%20pour%20une%20nouvelle%20journ%C3%A9e%20!"
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
@@ -143,7 +137,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data:
-          message: "Bonne soirée ! Je vais me reposer maintenant."
+          message: "Bonne%20soir%C3%A9e%20!%20Je%20vais%20me%20reposer%20maintenant."
       - delay: "00:00:03"
       - action: rest_command.nabaztag_taichi
         data:
@@ -212,16 +206,16 @@ script:
       - variables:
           joke: >
             {% set jokes = [
-              "Pourquoi les plongeurs plongent-ils toujours en arrière et jamais en avant ? Parce que sinon, ils tombent dans le bateau !",
-              "Que dit un escargot quand il croise une limace ? Regarde, un nudiste !",
-              "Qu'est-ce qui est jaune et qui attend ? Jonathan !",
-              "Pourquoi les poissons n'aiment pas jouer au tennis ? Parce qu'ils ont peur du filet !",
-              "Comment appelle-t-on un chat tombé dans un pot de peinture le jour de Noël ? Un chat-mallow !",
-              "Que dit un informaticien quand il se noie ? F1 ! F1 !",
-              "Pourquoi les dinosaures ne parlent pas ? Parce qu'ils sont morts !",
-              "Comment fait-on pour allumer un barbecue breton ? On utilise des breizh !",
-              "Qu'est-ce qui est transparent et qui sent la carotte ? Un pet de lapin !",
-              "Pourquoi Mickey Mouse ? Parce que Mario Bros !"
+              "Pourquoi%20les%20plongeurs%20plongent-ils%20toujours%20en%20arri%C3%A8re%20et%20jamais%20en%20avant%20?%20Parce%20que%20sinon,%20ils%20tombent%20dans%20le%20bateau%20!",
+              "Que%20dit%20un%20escargot%20quand%20il%20croise%20une%20limace%20?%20Regarde,%20un%20nudiste%20!",
+              "Qu'est-ce%20qui%20est%20jaune%20et%20qui%20attend%20?%20Jonathan%20!",
+              "Pourquoi%20les%20poissons%20n'aiment%20pas%20jouer%20au%20tennis%20?%20Parce%20qu'ils%20ont%20peur%20du%20filet%20!",
+              "Comment%20appelle-t-on%20un%20chat%20tomb%C3%A9%20dans%20un%20pot%20de%20peinture%20le%20jour%20de%20No%C3%ABl%20?%20Un%20chat-mallow%20!",
+              "Que%20dit%20un%20informaticien%20quand%20il%20se%20noie%20?%20F1%20!%20F1%20!",
+              "Pourquoi%20les%20dinosaures%20ne%20parlent%20pas%20?%20Parce%20qu'ils%20sont%20morts%20!",
+              "Comment%20fait-on%20pour%20allumer%20un%20barbecue%20breton%20?%20On%20utilise%20des%20breizh%20!",
+              "Qu'est-ce%20qui%20est%20transparent%20et%20qui%20sent%20la%20carotte%20?%20Un%20pet%20de%20lapin%20!",
+              "Pourquoi%20Mickey%20Mouse%20?%20Parce%20que%20Mario%20Bros%20!"
             ] %}
             {{ jokes | random }}
       - action: rest_command.nabaztag_set_nose
@@ -252,11 +246,11 @@ script:
         data:
           message: >
             {% set weather_messages = [
-              "Il fait beau aujourd'hui ! Parfait pour sortir !",
-              "Le temps est nuageux mais agréable !",
-              "Il pleut un peu, n'oubliez pas votre parapluie !",
-              "Quelle belle journée pour une promenade !",
-              "Le ciel est dégagé, profitez-en bien !"
+              "Il%20fait%20beau%20aujourd'hui%20!%20Parfait%20pour%20sortir%20!",
+              "Le%20temps%20est%20nuageux%20mais%20agr%C3%A9able%20!",
+              "Il%20pleut%20un%20peu,%20n'oubliez%20pas%20votre%20parapluie%20!",
+              "Quelle%20belle%20journ%C3%A9e%20pour%20une%20promenade%20!",
+              "Le%20ciel%20est%20d%C3%A9gag%C3%A9,%20profitez-en%20bien%20!"
             ] %}
             {{ weather_messages | random }}
 
@@ -276,7 +270,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data:
-          message: "{{ ['Allez, un petit étirement !', 'Time de se dégourdir !', 'Un peu d exercice !'] | random }}"
+          message: "{{ ['Allez,%20un%20petit%20%C3%A9tirement%20!',%20'Time%20de%20se%20d%C3%A9gourdir%20!',%20'Un%20peu%20d%20exercice%20!'] | random }}"
       - delay: "00:00:02"
       - action: rest_command.nabaztag_taichi
         data:
@@ -292,7 +286,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data:
-          message: "{{ ['Haaaaa... petit bâillement !', 'Je suis un peu fatigué...', 'Hooooo... excusez-moi !'] | random }}"
+          message: "{{ ['Haaaaa...%20petit%20b%C3%A2illement%20!',%20'Je%20suis%20un%20peu%20fatigu%C3%A9...',%20'Hooooo...%20excusez-moi%20'] | random }}"
       - action: rest_command.nabaztag_move_left_ear
         data:
           position: 0
