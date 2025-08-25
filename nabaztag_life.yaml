@@ -1,46 +1,40 @@
 # ==========================================
-# AUTOMATISATION NABAZTAG VIVANT
+# AUTOMATISATION NABAZTAG VIVANT - VERSION CORRIGÉE
 # Active de 8h à 17h avec actions aléatoires
-# Compatible avec vos rest_command existantes
 # ==========================================
 
 # Automatisation principale - Démarrage à 8h
 automation:
   - id: nabaztag_start_day
-    alias: "Nabaztag - Démarrer la journée"
+    alias: "Nabaztag - Actions aléatoires ON"
     trigger:
       - trigger: time
-        at: "08:00:00"
+        at: "07:05:00"  # 5 min après le réveil existant
     condition:
-      - condition: time
-        weekday:
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
-          - sun
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"  # Seulement si déjà réveillé
     action:
-      - action: script.nabaztag_wake_up
-      - delay: "00:02:00"
       - action: automation.turn_on
         target:
           entity_id: automation.nabaztag_random_actions
 
-  # Automatisation - Arrêt à 17h
+  # Automatisation - Arrêt à 21h45 (avant le coucher existant)
   - id: nabaztag_end_day
-    alias: "Nabaztag - Terminer la journée"
+    alias: "Nabaztag - Actions aléatoires OFF"
     trigger:
       - trigger: time
-        at: "22:00:00"
+        at: "21:45:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
     action:
       - action: automation.turn_off
         target:
           entity_id: automation.nabaztag_random_actions
-      - action: script.nabaztag_sleep_sequence
 
-  # Automatisation - Actions aléatoires (toutes les 15-45 minutes)
+  # Automatisation - Actions aléatoires (toutes les 15 minutes)
   - id: nabaztag_random_actions
     alias: "Nabaztag - Actions aléatoires"
     trigger:
@@ -48,14 +42,17 @@ automation:
         minutes: "/15"
     condition:
       - condition: time
-        after: "08:00:00"
-        before: "17:00:00"
+        after: "07:00:00"
+        before: "21:45:00"
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
       - condition: template
         value_template: "{{ (range(1,4) | random) == 1 }}" # 33% de chance
     action:
       - action: script.nabaztag_random_action
 
-        # Actions aux heures pleines
+  # Actions aux heures pleines
   - id: nabaztag_hourly_action
     alias: "Nabaztag - Action horaire"
     trigger:
@@ -63,8 +60,11 @@ automation:
         minutes: 0
     condition:
       - condition: time
-        after: "08:00:00"
-        before: "17:00:00"
+        after: "07:00:00"
+        before: "21:45:00"
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
     action:
       - action: script.nabaztag_announce_time
       - delay: "00:00:05"
@@ -78,8 +78,8 @@ automation:
         at: "12:00:00"
     action:
       - action: rest_command.nabaztag_say
-        data_template:
-          message: "{{ 'C'est l'heure du déjeuner ! Bon appétit à tous !' | urlencode }}"
+        data:
+          message: "C'est l'heure du déjeuner ! Bon appétit à tous !"
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
@@ -88,7 +88,7 @@ automation:
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
-          nose_color: "green"
+          nose_color: "00FF00"  # Vert en hex
 
   # Retour de pause déjeuner (13h)
   - id: nabaztag_back_from_lunch
@@ -98,9 +98,10 @@ automation:
         at: "13:00:00"
     action:
       - action: rest_command.nabaztag_say
-        data_template:
-          message: "{{ 'J'espère que vous avez bien mangé ! On reprend !' | urlencode }}"
+        data:
+          message: "J'espère que vous avez bien mangé ! On reprend !"
       - action: script.nabaztag_stretch
+
 # ==========================================
 # SCRIPTS PRINCIPAUX
 # ==========================================
@@ -114,7 +115,7 @@ script:
       - delay: "00:00:02"
       - action: rest_command.nabaztag_taichi
         data:
-          speed: 500  # Vitesse moyenne
+          speed: 500
       - delay: "00:00:03"
       - action: rest_command.nabaztag_move_left_ear
         data:
@@ -125,11 +126,11 @@ script:
       - delay: "00:00:01"
       - action: rest_command.nabaztag_say
         data:
-          message: "{{ 'Bonjour ! Je me réveille pour une nouvelle journée !' | urlencode }}"
+          message: "Bonjour ! Je me réveille pour une nouvelle journée !"
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
-          nose_color: "green"
+          nose_color: "00FF00"  # Vert en hex
 
   # Endormissement du soir
   nabaztag_sleep_sequence:
@@ -137,11 +138,11 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data:
-          message: "{{ 'Bonne soirée ! Je vais me reposer maintenant.' | urlencode }}"
+          message: "Bonne soirée ! Je vais me reposer maintenant."
       - delay: "00:00:03"
       - action: rest_command.nabaztag_taichi
         data:
-          speed: 100  # Vitesse lente
+          speed: 100
       - delay: "00:00:02"
       - action: rest_command.nabaztag_move_left_ear
         data:
@@ -152,7 +153,7 @@ script:
       - action: rest_command.nabaztag_set_nose
         data:
           state: 0
-          nose_color: "off"
+          nose_color: "000000"  # Off en hex
       - delay: "00:00:02"
       - action: rest_command.nabaztag_sleep
 
@@ -203,35 +204,33 @@ script:
   nabaztag_tell_joke:
     alias: "Nabaztag - Raconter une blague"
     sequence:
-      - variables:
-          joke: >
-            {% set jokes = [
-              "{{ 'Pourquoi les plongeurs plongent-ils toujours en arrière et jamais en avant ? Parce que sinon, ils tombent dans le bateau !' | urlencode }}",
-              "{{ 'Que dit un escargot quand il croise une limace ? Regarde, un nudiste !' | urlencode }}",
-              "{{ 'Qu'est-ce qui est jaune et qui attend ? Jonathan !' | urlencode }}",
-              "{{ 'Pourquoi les poissons n'aiment pas jouer au tennis ? Parce qu'ils ont peur du filet !' | urlencode }}",
-              "{{ 'Comment appelle-t-on un chat tombé dans un pot de peinture le jour de Noël ? Un chat-mallow !' | urlencode }}",
-              "{{ 'Que dit un informaticien quand il se noie ? F1 ! F1 !' | urlencode }}",
-              "{{ 'Pourquoi les dinosaures ne parlent pas ? Parce qu'ils sont morts !' | urlencode }}",
-              "{{ 'Comment fait-on pour allumer un barbecue breton ? On utilise des breizh !' | urlencode }}",
-              "{{ 'Qu'est-ce qui est transparent et qui sent la carotte ? Un pet de lapin !' | urlencode }}",
-              "{{ 'Pourquoi Mickey Mouse ? Parce que Mario Bros !' | urlencode }}"
-            ] %}
-            {{ jokes | random }}
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
-          nose_color: "orange"
+          nose_color: "FF8000"  # Orange en hex
       - action: rest_command.nabaztag_communication
       - delay: "00:00:01"
       - action: rest_command.nabaztag_say
-        data:
-          message: "{{ joke }}"
+        data_template:
+          message: >
+            {% set jokes = [
+              "Pourquoi les plongeurs plongent-ils toujours en arrière et jamais en avant ? Parce que sinon ils tombent dans le bateau !",
+              "Que dit un escargot quand il croise une limace ? Regarde un nudiste !",
+              "Quest-ce qui est jaune et qui attend ? Jonathan !",
+              "Pourquoi les poissons naiment pas jouer au tennis ? Parce quils ont peur du filet !",
+              "Comment appelle-t-on un chat tombé dans un pot de peinture le jour de Noël ? Un chat-mallow !",
+              "Que dit un informaticien quand il se noie ? F1 F1 !",
+              "Pourquoi les dinosaures ne parlent pas ? Parce quils sont morts !",
+              "Comment fait-on pour allumer un barbecue breton ? On utilise des breizh !",
+              "Quest-ce qui est transparent et qui sent la carotte ? Un pet de lapin !",
+              "Pourquoi Mickey Mouse ? Parce que Mario Bros !"
+            ] %}
+            {{ jokes | random }}
       - delay: "00:00:02"
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
-          nose_color: "green"
+          nose_color: "00FF00"  # Vert en hex
 
   # Annoncer la météo
   nabaztag_announce_weather:
@@ -243,14 +242,14 @@ script:
           weather_icon: "{{ ['sun', 'clouds', 'rain'] | random }}"
       - delay: "00:00:02"
       - action: rest_command.nabaztag_say
-        data:
+        data_template:
           message: >
             {% set weather_messages = [
-              "{{ 'Il fait beau aujourd'hui ! Parfait pour sortir !' | urlencode }}",
-              "{{ 'Le temps est nuageux mais agréable !' | urlencode }}",
-              "{{ 'Il pleut un peu, n'oubliez pas votre parapluie !' | urlencode }}",
-              "{{ 'Quelle belle journée pour une promenade !' | urlencode }}",
-              "{{ 'Le ciel est dégagé, profitez-en bien !' | urlencode }}"
+              "Il fait beau aujourdhui ! Parfait pour sortir !",
+              "Le temps est nuageux mais agréable !",
+              "Il pleut un peu noubliez pas votre parapluie !",
+              "Quelle belle journée pour une promenade !",
+              "Le ciel est dégagé profitez-en bien !"
             ] %}
             {{ weather_messages | random }}
 
@@ -261,7 +260,7 @@ script:
       - action: rest_command.nabaztag_ack
       - delay: "00:00:01"
       - action: rest_command.nabaztag_say
-        data:
+        data_template:
           message: "Il est {{ now().strftime('%H heures %M') }}"
 
   # Étirement (Taichi)
@@ -270,23 +269,23 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data_template:
-          message: "{{ (['Allez, un petit étirement !', 'Time de se dégourdir !', 'Un peu d'exercice !'] | random) | urlencode }}"
+          message: "{{ ['Allez un petit étirement !', 'Time de se dégourdir !', 'Un peu dexercice !'] | random }}"
       - delay: "00:00:02"
       - action: rest_command.nabaztag_taichi
         data:
-          speed: 1000  # Vitesse maximale
+          speed: 1000
       - delay: "00:00:05"
       - action: rest_command.nabaztag_taichi
         data:
-          speed: 500   # Retour vitesse normale
+          speed: 500
 
   # Bâillement
   nabaztag_yawn:
     alias: "Nabaztag - Bâiller"
     sequence:
       - action: rest_command.nabaztag_say
-        data:
-          message: "{{ (['Haaaaa... petit bâillement !', 'Je suis un peu fatigué...', 'Hooooo... excusez-moi'] | random) | urlencode }}"
+        data_template:
+          message: "{{ ['Haaaaa petit bâillement !', 'Je suis un peu fatigué', 'Hooooo excusez-moi'] | random }}"
       - action: rest_command.nabaztag_move_left_ear
         data:
           position: 0
@@ -308,20 +307,25 @@ script:
         data:
           position: 8
 
-  # Danse des oreilles
+  # Danse des oreilles (compatible avec script existant)
   nabaztag_ear_dance:
     alias: "Nabaztag - Danse des oreilles"
     sequence:
       - action: rest_command.nabaztag_communication
       - repeat:
-          count: 5
+          count: 3
           sequence:
             - action: rest_command.nabaztag_move_left_ear
               data:
-                position: "{{ range(0, 17) | random }}"
+                position: "{{ range(0, 11) | random }}"
             - action: rest_command.nabaztag_move_right_ear
               data:
-                position: "{{ range(0, 17) | random }}"
+                position: "{{ range(0, 11) | random }}"
+            - delay: "00:00:00.5"
+            - action: rest_command.nabaztag_set_nose
+              data:
+                state: 1
+                nose_color: "{{ ['FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', 'FF8000'] | random }}"
             - delay: "00:00:00.5"
       - action: rest_command.nabaztag_move_left_ear
         data:
@@ -355,12 +359,40 @@ script:
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
-          nose_color: "{{ ['red', 'orange', 'green'] | random }}"
+          nose_color: "{{ ['FF0000', 'FF8000', '00FF00'] | random }}"
       - delay: "00:00:02"
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
-          nose_color: "green"
+          nose_color: "00FF00"  # Vert en hex
+
+  # Script de danse (utilise le script existant)
+  nabaztag_dance:
+    alias: "Nabaztag - Danse"
+    sequence:
+      - action: rest_command.nabaztag_taichi
+        data:
+          speed: 1000
+      - delay: "00:00:02"
+      - repeat:
+          count: 3
+          sequence:
+            - action: rest_command.nabaztag_move_left_ear
+              data:
+                position: "{{ range(0, 11) | random }}"
+            - action: rest_command.nabaztag_move_right_ear
+              data:
+                position: "{{ range(0, 11) | random }}"
+            - delay: "00:00:00.5"
+            - action: rest_command.nabaztag_set_nose
+              data:
+                state: 1
+                nose_color: "{{ ['FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', 'FF8000'] | random }}"
+            - delay: "00:00:00.5"
+      - action: rest_command.nabaztag_set_nose
+        data:
+          state: 1
+          nose_color: "8000FF"  # Purple en hex
 
   # Action surprise
   nabaztag_surprise_action:

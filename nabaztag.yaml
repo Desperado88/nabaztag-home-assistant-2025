@@ -28,7 +28,7 @@ input_text:
 #------------------------------------------------------------------------------
   nabaztag_ip_address:
     name: Nabaztag Ip Address
-    initial: http://192.168.99.15 # Indiquer ici l'ip du nabaztag précèder de "http://", exemple: http://192.168.0.13
+    initial: http://192.168.0.13 # Indiquer ici l'ip du nabaztag précèder de "http://", exemple: http://192.168.0.13
   nabaztag_tts_language:
     name: Nabaztag Tts Language
     initial: fr # Changer la langue si besoin
@@ -84,70 +84,70 @@ sensor:
     icon: mdi:currency-btc
 
   # Traffic Sensor - Google Maps Travel Time mis à jour
-  - platform: google_travel_time
-    api_key: !secret google_distance_matrix_api_key
-    name: Home To Work
-    origin: Verona, Italy
-    destination: Modena, Italy
-    travel_mode: driving
-    unit_system: metric
-    scan_interval: 300
+  # - platform: google_travel_time
+  #   api_key: !secret google_distance_matrix_api_key
+  #   name: Home To Work
+  #   origin: Verona, Italy
+  #   destination: Modena, Italy
+  #   travel_mode: driving
+  #   unit_system: metric
+  #   scan_interval: 300
 
   # Template sensors
-  - platform: template
-    sensors:
-      traffic_status:
-        friendly_name: "Traffic Status"
-        value_template: >-
-          {% set duration = states('sensor.home_to_work') | float %}
-          {% set normal_time = states('input_number.time_to_work') | float %}
-          {% if duration == 0 %}
-            unknown
-          {% elif duration <= normal_time * 1.1 %}
-            good
-          {% elif duration <= normal_time * 1.3 %}
-            moderate
-          {% else %}
-            heavy
-          {% endif %}
-        icon_template: >-
-          {% set status = states('sensor.traffic_status') %}
-          {% if status == 'good' %}
-            mdi:car-speed-limiter
-          {% elif status == 'moderate' %}
-            mdi:car-brake-alert
-          {% else %}
-            mdi:car-brake-hold
-          {% endif %}
+  # - platform: template
+  #   sensors:
+  #     traffic_status:
+  #       friendly_name: "Traffic Status"
+  #       value_template: >-
+  #         {% set duration = states('sensor.home_to_work') | float %}
+  #         {% set normal_time = states('input_number.time_to_work') | float %}
+  #         {% if duration == 0 %}
+  #           unknown
+  #         {% elif duration <= normal_time * 1.1 %}
+  #           good
+  #         {% elif duration <= normal_time * 1.3 %}
+  #           moderate
+  #         {% else %}
+  #           heavy
+  #         {% endif %}
+  #       icon_template: >-
+  #         {% set status = states('sensor.traffic_status') %}
+  #         {% if status == 'good' %}
+  #           mdi:car-speed-limiter
+  #         {% elif status == 'moderate' %}
+  #           mdi:car-brake-alert
+  #         {% else %}
+  #           mdi:car-brake-hold
+  #         {% endif %}
 
   # Pollution Sensor - Remplacé par REST sensor pour OpenWeather Air Pollution API
-  - platform: rest
-    name: Air Quality Index
-    resource_template: "https://api.openweathermap.org/data/2.5/air_pollution?lat={{ state_attr('zone.home', 'latitude') }}&lon={{ state_attr('zone.home', 'longitude') }}&appid={{ states('input_text.openweather_api_key') }}"
-    value_template: "{{ value_json.list[0].main.aqi }}"
-    unit_of_measurement: "AQI"
-    scan_interval: 1800
-    icon: mdi:air-filter
+  # - platform: rest
+  #   name: Air Quality Index
+  #   resource_template: "https://api.openweathermap.org/data/2.5/air_pollution?lat={{ state_attr('zone.home', 'latitude') }}&lon={{ state_attr('zone.home', 'longitude') }}&appid={{ states('input_text.openweather_api_key') }}"
+  #   value_template: "{{ value_json.list[0].main.aqi }}"
+  #   unit_of_measurement: "AQI"
+  #   scan_interval: 1800
+  #   icon: mdi:air-filter
 
-  - platform: template
-    sensors:
-      air_quality_status:
-        friendly_name: "Air Quality Status"
-        value_template: >-
-          {% set aqi = states('sensor.air_quality_index') | int %}
-          {% if aqi == 1 %}
-            Good
-          {% elif aqi == 2 %}
-            Fair
-          {% elif aqi == 3 %}
-            Moderate
-          {% elif aqi == 4 %}
-            Poor
-          {% elif aqi == 5 %}
-            Very Poor
-          {% else %}
-            Unknown
-          {% endif %}
+  # - platform: template
+  #   sensors:
+  #     air_quality_status:
+  #       friendly_name: "Air Quality Status"
+  #       value_template: >-
+  #         {% set aqi = states('sensor.air_quality_index') | int %}
+  #         {% if aqi == 1 %}
+  #           Good
+  #         {% elif aqi == 2 %}
+  #           Fair
+  #         {% elif aqi == 3 %}
+  #           Moderate
+  #         {% elif aqi == 4 %}
+  #           Poor
+  #         {% elif aqi == 5 %}
+  #           Very Poor
+  #         {% else %}
+  #           Unknown
+  #         {% endif %}
 
 #------------------------------------------------------------------------------
 group:
@@ -665,6 +665,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_set_weather
         data:
+          weather: "{{ states('input_select.nabaztag_weather') }}"
           weather_icon: "{{ states('input_select.nabaztag_weather') }}"
 
   nabaztag_dance:
@@ -759,8 +760,6 @@ script:
             Bonjour ! Voici les informations du jour.
             La météo est {{ states('weather.home') }}.
             Le Bitcoin vaut {{ states('sensor.bitcoin_exchange_rate') }} euros.
-            Le trajet vers le travail prendra {{ states('sensor.home_to_work') }} minutes.
-            La qualité de l'air est {{ states('sensor.air_quality_status') }}.
             Bonne journée !
   # Config
   nabaztag_apply_setup:
@@ -1067,42 +1066,42 @@ automation:
             {% endif %}
 
   # Informations trafic avant le travail
-  - alias: "Nabaztag Morning Traffic Auto"
-    id: nabaztag_morning_traffic_auto
-    trigger:
-      - trigger: time
-        at: "07:30:00"
-    condition:
-      - condition: state
-        entity_id: input_boolean.nabaztaglife
-        state: "on"
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: input_select.nabaztag_traffic
-            state: "Off"
-      - condition: time
-        weekday:
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-    action:
-      - action: script.nabaztag_talk
-        data:
-          message: >
-            {% set traffic = states('sensor.traffic_status') %}
-            {% set time = states('sensor.home_to_work') %}
-            {% if traffic == 'good' %}
-              Bonne nouvelle ! Le trajet vers le travail ne prendra que {{ time }} minutes aujourd'hui.
-            {% elif traffic == 'moderate' %}
-              Attention, le trafic est modéré. Comptez {{ time }} minutes pour aller au travail.
-            {% elif traffic == 'heavy' %}
-              Attention ! Le trafic est dense. Il faudra {{ time }} minutes pour rejoindre le travail. Partez plus tôt !
-            {% else %}
-              Le temps de trajet vers le travail est de {{ time }} minutes.
-            {% endif %}
+  # - alias: "Nabaztag Morning Traffic Auto"
+  #   id: nabaztag_morning_traffic_auto
+  #   trigger:
+  #     - trigger: time
+  #       at: "07:30:00"
+  #   condition:
+  #     - condition: state
+  #       entity_id: input_boolean.nabaztaglife
+  #       state: "on"
+  #     - condition: not
+  #       conditions:
+  #         - condition: state
+  #           entity_id: input_select.nabaztag_traffic
+  #           state: "Off"
+  #     - condition: time
+  #       weekday:
+  #         - mon
+  #         - tue
+  #         - wed
+  #         - thu
+  #         - fri
+  #   action:
+  #     - action: script.nabaztag_talk
+  #       data:
+  #         message: >
+  #           {% set traffic = states('sensor.traffic_status') %}
+  #           {% set time = states('sensor.home_to_work') %}
+  #           {% if traffic == 'good' %}
+  #             Bonne nouvelle ! Le trajet vers le travail ne prendra que {{ time }} minutes aujourd'hui.
+  #           {% elif traffic == 'moderate' %}
+  #             Attention, le trafic est modéré. Comptez {{ time }} minutes pour aller au travail.
+  #           {% elif traffic == 'heavy' %}
+  #             Attention ! Le trafic est dense. Il faudra {{ time }} minutes pour rejoindre le travail. Partez plus tôt !
+  #           {% else %}
+  #             Le temps de trajet vers le travail est de {{ time }} minutes.
+  #           {% endif %}
 
   # Cours du Bitcoin (mise à jour toutes les heures pendant la journée)
   - alias: "Nabaztag Bitcoin Update Auto"
@@ -1146,36 +1145,36 @@ automation:
             {% endif %}
 
   # Qualité de l'air (alerte si mauvaise)
-  - alias: "Nabaztag Air Quality Alert Auto"
-    id: nabaztag_air_quality_alert_auto
-    trigger:
-      - trigger: state
-        entity_id: sensor.air_quality_index
-    condition:
-      - condition: state
-        entity_id: input_boolean.nabaztaglife
-        state: "on"
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: input_select.nabaztag_pollution
-            state: "Off"
-      - condition: numeric_state
-        entity_id: sensor.air_quality_index
-        above: 3
-    action:
-      - action: script.nabaztag_talk
-        data:
-          message: >
-            {% set aqi = states('sensor.air_quality_index') | int %}
-            {% set quality = states('sensor.air_quality_status') %}
-            {% if aqi == 4 %}
-              Attention ! La qualité de l'air est mauvaise aujourd'hui. Évitez les activités extérieures intenses.
-            {% elif aqi == 5 %}
-              Alerte pollution ! La qualité de l'air est très mauvaise. Restez à l'intérieur si possible.
-            {% else %}
-              La qualité de l'air est {{ quality }}.
-            {% endif %}
+  # - alias: "Nabaztag Air Quality Alert Auto"
+  #   id: nabaztag_air_quality_alert_auto
+  #   trigger:
+  #     - trigger: state
+  #       entity_id: sensor.air_quality_index
+  #   condition:
+  #     - condition: state
+  #       entity_id: input_boolean.nabaztaglife
+  #       state: "on"
+  #     - condition: not
+  #       conditions:
+  #         - condition: state
+  #           entity_id: input_select.nabaztag_pollution
+  #           state: "Off"
+  #     - condition: numeric_state
+  #       entity_id: sensor.air_quality_index
+  #       above: 3
+  #   action:
+  #     - action: script.nabaztag_talk
+  #       data:
+  #         message: >
+  #           {% set aqi = states('sensor.air_quality_index') | int %}
+  #           {% set quality = states('sensor.air_quality_status') %}
+  #           {% if aqi == 4 %}
+  #             Attention ! La qualité de l'air est mauvaise aujourd'hui. Évitez les activités extérieures intenses.
+  #           {% elif aqi == 5 %}
+  #             Alerte pollution ! La qualité de l'air est très mauvaise. Restez à l'intérieur si possible.
+  #           {% else %}
+  #             La qualité de l'air est {{ quality }}.
+  #           {% endif %}
 
   # Résumé quotidien du matin
   - alias: "Nabaztag Daily Morning Summary"
