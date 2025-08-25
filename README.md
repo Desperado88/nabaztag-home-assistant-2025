@@ -4,7 +4,7 @@ GitHub source :
   https://github.com/andreax79/ServerlessNabaztag/tree/main
 
 A firmware allowing controlling the Nabaztag/tag directly via web, without an external server - andreax79/ServerlessNabaztag
-Just remember that you can use your Raspberry Pi as host for this firmware files (just create a folder named "www" in the config folder and put the "vl" directory right there).
+Just remember that you can use your Raspberry Pi as host for this firmware files (just create a folder named "www" in the config folder and put the "vl" directory right there). For English tts, you can use "bc.jsp" in the "TTS En" folder.
 After installing this new firmware, it will be possible to control the rabbit using the Home Assistant user interface:
 ![FireShot Capture 4 - Home Assistant - https___maxhassio duckdns org_states_group tab_nabaztag](https://github.com/user-attachments/assets/76396d13-a4cb-4041-aa77-7e3cd82eb915)
 
