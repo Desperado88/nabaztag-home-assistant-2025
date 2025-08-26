@@ -79,7 +79,7 @@ automation:
     action:
       - action: rest_command.nabaztag_say
         data:
-          message: "C'est l'heure du déjeuner ! Bon appétit à tous !"
+          message: "ses lheure du daisjeuner ! Bon appaittit a tous !"
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
@@ -99,7 +99,7 @@ automation:
     action:
       - action: rest_command.nabaztag_say
         data:
-          message: "J'espère que vous avez bien mangé ! On reprend !"
+          message: "Jespaire que vous avez bien manger ! On reprend !"
       - action: script.nabaztag_stretch
 
 # ==========================================
@@ -126,7 +126,7 @@ script:
       - delay: "00:00:01"
       - action: rest_command.nabaztag_say
         data:
-          message: "Bonjour ! Je me réveille pour une nouvelle journée !"
+          message: "Bonjour ! Je me raiveille pour une nouvelle journer !"
       - action: rest_command.nabaztag_set_nose
         data:
           state: 1
@@ -214,13 +214,12 @@ script:
         data_template:
           message: >
             {% set jokes = [
-              "Pourquoi les plongeurs plongent-ils toujours en arrière et jamais en avant ? Parce que sinon ils tombent dans le bateau !",
+              "Pourquoi les plongeurs plongent-ils toujours en arriaire et jamais en avant ? Parce que sinon ils tombent dans le bateau !",
               "Que dit un escargot quand il croise une limace ? Regarde un nudiste !",
               "Quest-ce qui est jaune et qui attend ? Jonathan !",
               "Pourquoi les poissons naiment pas jouer au tennis ? Parce quils ont peur du filet !",
-              "Comment appelle-t-on un chat tombé dans un pot de peinture le jour de Noël ? Un chat-mallow !",
+              "Comment appelle-t-on un chat tomber dans un pot de peinture le jour de Noel ? Un chat-mallow !",
               "Que dit un informaticien quand il se noie ? F1 F1 !",
-              "Pourquoi les dinosaures ne parlent pas ? Parce quils sont morts !",
               "Comment fait-on pour allumer un barbecue breton ? On utilise des breizh !",
               "Quest-ce qui est transparent et qui sent la carotte ? Un pet de lapin !",
               "Pourquoi Mickey Mouse ? Parce que Mario Bros !"
@@ -246,10 +245,10 @@ script:
           message: >
             {% set weather_messages = [
               "Il fait beau aujourdhui ! Parfait pour sortir !",
-              "Le temps est nuageux mais agréable !",
+              "Le temps est nuageux mais agrer-able !",
               "Il pleut un peu noubliez pas votre parapluie !",
-              "Quelle belle journée pour une promenade !",
-              "Le ciel est dégagé profitez-en bien !"
+              "Quelle belle journer pour une promenade !",
+              "Le ciel est dais-gager profitez-en bien !"
             ] %}
             {{ weather_messages | random }}
 
@@ -269,7 +268,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data_template:
-          message: "{{ ['Allez un petit étirement !', 'Time de se dégourdir !', 'Un peu dexercice !'] | random }}"
+          message: "{{ ['Allez un petit etirement !', 'Time de se dégourdir !', 'Un peu dexercice !'] | random }}"
       - delay: "00:00:02"
       - action: rest_command.nabaztag_taichi
         data:
@@ -285,7 +284,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data_template:
-          message: "{{ ['Haaaaa petit bâillement !', 'Je suis un peu fatigué', 'Hooooo excusez-moi'] | random }}"
+          message: "{{ ['Haaaaa petit bâillement !', 'Je suis un peu fatiguer', 'Hooooo excusez-moi'] | random }}"
       - action: rest_command.nabaztag_move_left_ear
         data:
           position: 0
