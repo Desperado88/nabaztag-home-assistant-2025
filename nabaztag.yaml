@@ -758,9 +758,9 @@ script:
         data:
           message: >
             Bonjour ! Voici les informations du jour.
-            La météo est {{ states('weather.home') }}.
+            La meteo est {{ states('weather.home') }}.
             Le Bitcoin vaut {{ states('sensor.bitcoin_exchange_rate') }} euros.
-            Bonne journée !
+            Bonne journee !
   # Config
   nabaztag_apply_setup:
     alias: "Nabaztag - Appliquer Configuration Setup"
@@ -1139,9 +1139,9 @@ automation:
             {% set previous = states('input_number.bitcoin_previous_exchange_rate') | float %}
             {% set diff = current - previous %}
             {% if diff > 0 %}
-              Excellente nouvelle ! Le Bitcoin a augmenté et vaut maintenant {{ current | round(0) }} euros.
+              Excellente nouvelle ! Le Bitcoin a augmenter et vaut maintenant {{ current | round(0) }} euros.
             {% else %}
-              Attention, le Bitcoin a baissé et vaut maintenant {{ current | round(0) }} euros.
+              Attention, le Bitcoin a baisser et vaut maintenant {{ current | round(0) }} euros.
             {% endif %}
 
   # Qualité de l'air (alerte si mauvaise)
@@ -1171,7 +1171,7 @@ automation:
   #           {% if aqi == 4 %}
   #             Attention ! La qualité de l'air est mauvaise aujourd'hui. Évitez les activités extérieures intenses.
   #           {% elif aqi == 5 %}
-  #             Alerte pollution ! La qualité de l'air est très mauvaise. Restez à l'intérieur si possible.
+  #             Alerte pollution ! La qualité de l'air est très mauvaise. Restez a l'intérieur si possible.
   #           {% else %}
   #             La qualité de l'air est {{ quality }}.
   #           {% endif %}
@@ -1245,7 +1245,7 @@ template:
     action:
       - action: script.nabaztag_talk
         data:
-          message: "Bonjour ! Je me raiveille et suis prait à vous servir !"
+          message: "Bonjour ! Je me raiveille et suis prait a vous servir !"
       - delay:
           seconds: 2
       - action: script.nabaztag_dance

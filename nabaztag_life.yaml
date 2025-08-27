@@ -268,7 +268,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data_template:
-          message: "{{ ['Allez un petit etirement !', 'Time de se dégourdir !', 'Un peu dexercice !'] | random }}"
+          message: "{{ ['Allez un petit etirement !', 'Il est temps de se daigourdir !', 'Un peu dexercice !'] | random }}"
       - delay: "00:00:02"
       - action: rest_command.nabaztag_taichi
         data:
@@ -284,7 +284,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data_template:
-          message: "{{ ['Haaaaa petit bâillement !', 'Je suis un peu fatiguer', 'Hooooo excusez-moi'] | random }}"
+          message: "{{ ['Haaaaa petit baillement !', 'Je suis un peu fatiguer', 'Hooooo excusez-moi'] | random }}"
       - action: rest_command.nabaztag_move_left_ear
         data:
           position: 0
