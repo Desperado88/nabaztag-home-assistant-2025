@@ -1245,31 +1245,7 @@ template:
     action:
       - action: script.nabaztag_talk
         data:
-          message: "Bonjour ! Je me réveille et suis prêt à vous servir !"
-      - delay:
-          seconds: 2
-      - action: script.nabaztag_dance
-
-  - trigger:
-      - trigger: state
-        entity_id: input_boolean.nabaztaglife
-        to: 'off'
-    action:
-      - action: script.nabaztag_talk
-        data:
-          message: "Bonne nuit ! Je vais me reposer maintenant."
-
-#------------------------------------------------------------------------------
-# NOTIFICATION POUR ÉVÉNEMENTS IMPORTANTS
-#------------------------------------------------------------------------------
-  - trigger:
-      - trigger: state
-        entity_id: input_boolean.nabaztaglife
-        to: 'on'
-    action:
-      - action: script.nabaztag_talk
-        data:
-          message: "Bonjour ! Je me réveille et suis prêt à vous servir !"
+          message: "Bonjour ! Je me raiveille et suis prait à vous servir !"
       - delay:
           seconds: 2
       - action: script.nabaztag_dance
