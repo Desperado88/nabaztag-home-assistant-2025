@@ -2,45 +2,7 @@
 # AUTOMATISATION NABAZTAG VIVANT - VERSION CORRIGÉE
 # Active de 8h à 17h avec actions aléatoires
 # ==========================================
-
-sensor:
-  - platform: rest
-    name: Bitcoin Exchange Rate
-    resource: https://api.coinbase.com/v2/exchange-rates?currency=BTC
-    value_template: "{{ value_json.data.rates.EUR | float }}"
-    unit_of_measurement: "EUR"
-    scan_interval: 300
-    icon: mdi:currency-btc
-
-input_number:
-  bitcoin_previous_exchange_rate:
-    name: Previous Bitcoin Exchange Rate
-    initial: 0
-    min: 0
-    max: 500000
-    step: 0.01
-    mode: box
-    icon: mdi:currency-btc
-
-  bitcoin_value_difference:
-    name: Bitcoin Value Difference
-    initial: 0
-    min: -100000
-    max: 500000
-    step: 0.01
-    mode: box
-    icon: mdi:currency-btc
-
-input_select :
-  nabaztag_stocks:
-    name: Stocks Display
-    options:
-      - "Off"
-      - "Bitcoin"
-      - "All"
-    initial: "Off"
-    icon: mdi:chart-line
-
+    
 # Automatisation principale - Démarrage à 8h
 automation:
   - id: nabaztag_start_day
@@ -113,7 +75,11 @@ automation:
     alias: "Nabaztag - Pause déjeuner"
     trigger:
       - trigger: time
-        at: "12:00:00"
+        at: "12:30:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"  # Seulement si le Nabaztag est réveillé
     action:
       - action: rest_command.nabaztag_say
         data:
@@ -133,7 +99,11 @@ automation:
     alias: "Nabaztag - Retour déjeuner"
     trigger:
       - trigger: time
-        at: "13:00:00"
+        at: "13:30:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"  # Seulement si le Nabaztag est réveillé
     action:
       - action: rest_command.nabaztag_say
         data:
@@ -141,7 +111,7 @@ automation:
       - action: script.nabaztag_stretch
 
   # Cours du Bitcoin (mise à jour toutes les heures pendant la journée)
-  - alias: "Nabaztag Bitcoin Update Auto"
+  - alias: "Nabaztag - Bitcoin Update Auto"
     id: nabaztag_bitcoin_update_auto
     trigger:
       - trigger: time_pattern
@@ -186,56 +156,6 @@ automation:
 # ==========================================
 
 script:
-  # Réveil du matin
-  nabaztag_wake_up:
-    alias: "Nabaztag - Réveil"
-    sequence:
-      - action: rest_command.nabaztag_wakeup
-      - delay: "00:00:02"
-      - action: rest_command.nabaztag_taichi
-        data:
-          speed: 500
-      - delay: "00:00:03"
-      - action: rest_command.nabaztag_left_ear
-        data:
-          position: 8
-      - action: rest_command.nabaztag_right_ear
-        data:
-          position: 8
-      - delay: "00:00:01"
-      - action: rest_command.nabaztag_say
-        data:
-          message: "Bonjour ! Je me raiveille pour une nouvelle journer !"
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 1
-          nose_color: "00FF00"  # Vert en hex
-
-  # Endormissement du soir
-  nabaztag_sleep_sequence:
-    alias: "Nabaztag - Dodo"
-    sequence:
-      - action: rest_command.nabaztag_say
-        data:
-          message: "Bonne soirer ! Je vais me reposer maintenant."
-      - delay: "00:00:03"
-      - action: rest_command.nabaztag_taichi
-        data:
-          speed: 100
-      - delay: "00:00:02"
-      - action: rest_command.nabaztag_left_ear
-        data:
-          position: 0
-      - action: rest_command.nabaztag_right_ear
-        data:
-          position: 0
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 0
-          nose_color: "000000"  # Off en hex
-      - delay: "00:00:02"
-      - action: rest_command.nabaztag_sleep
-
   # Action aléatoire
   nabaztag_random_action:
     alias: "Nabaztag - Action aléatoire"
@@ -321,55 +241,48 @@ script:
           state: 1
           nose_color: "00FF00"  # Vert en hex
 
-  # Annoncer la météo (utilise weather.forecast_maison)
+# Annoncer la météo (utilise weather.forecast_maison)
   nabaztag_announce_weather:
     alias: "Nabaztag - Annoncer la météo"
     sequence:
       - variables:
           meteo: "{{ states('weather.forecast_maison') }}"
           temperature: "{{ state_attr('weather.forecast_maison', 'temperature') }}"
-      - action: rest_command.nabaztag_set_weather
+      - action: rest_command.nabaztag_weather
         data:
           weather: >
-            {% if meteo == "sunny" %}
-              sun
-            {% elif meteo in ["partlycloudy", "cloudy"] %}
-              clouds
+            {% if meteo in ["sunny", "clear"] %}
+              0
+            {% elif meteo in ["partlycloudy", "cloudy", "overcast"] %}
+              1
+            {% elif meteo == "fog" %}
+              2
             {% elif meteo in ["rainy", "pouring"] %}
-              rain
+              3
             {% elif meteo in ["snowy", "snowy-rainy"] %}
-              snow
+              4
+            {% elif meteo in ["lightning", "lightning-rainy"] %}
+              5
             {% else %}
-              clouds
-            {% endif %}
-          weather_icon: >
-            {% if meteo == "sunny" %}
-              sun
-            {% elif meteo in ["partlycloudy", "cloudy"] %}
-              clouds
-            {% elif meteo in ["rainy", "pouring"] %}
-              rain
-            {% elif meteo in ["snowy", "snowy-rainy"] %}
-              snow
-            {% else %}
-              clouds
+              1
             {% endif %}
       - delay: "00:00:02"
       - action: rest_command.nabaztag_say
-        data_template:
+        data:
           message: >
-            {% if meteo == "sunny" %}
-              Il fait beau aujourd'hui avec {{ temperature }} degrer !
-            {% elif meteo in ["partlycloudy", "cloudy"] %}
-              Le temps est nuageux avec {{ temperature }} degrer.
+            {% if meteo in ["sunny", "clear"] %}
+              Il fait beau aujourd'hui avec {{ temperature }} degr%C3%A9s !
+            {% elif meteo in ["partlycloudy", "cloudy", "overcast"] %}
+              Le temps est nuageux avec {{ temperature }} degr%C3%A9s.
             {% elif meteo in ["rainy", "pouring"] %}
-              Il pleut, prevoyez un parapluie ! Temperature : {{ temperature }} daigrai.
+              Il pleut, prevoyez un parapluie ! Temperature : {{ temperature }} degr%C3%A9s.
             {% elif meteo in ["snowy", "snowy-rainy"] %}
-              Il neige dehors ! Temperature : {{ temperature }} daigrai.
+              Il neige dehors ! Temperature : {{ temperature }} degr%C3%A9s.
+            {% elif meteo in ["lightning", "lightning-rainy"] %}
+              Il y a de l'orage ! Temperature : {{ temperature }} degr%C3%A9s.
             {% else %}
-              La meteo actuelle est {{ meteo }} avec {{ temperature }} daigrai.
+              La meteo actuelle est {{ meteo }} avec {{ temperature }} degr%C3%A9s.
             {% endif %}
-
 
   # Annoncer l'heure
   nabaztag_announce_time:
@@ -387,7 +300,7 @@ script:
     sequence:
       - action: rest_command.nabaztag_say
         data_template:
-          message: "{{ ['Allez un petit etirement !', 'Il est temps de se daigourdir !', 'Un peu dexercice !'] | random }}"
+          message: "{{ ['Allez un petit %C3%A9tirement !', 'Il est temps de se d%C3%A9gourdir !', 'Un peu dexercice !'] | random }}"
       - delay: "00:00:02"
       - action: rest_command.nabaztag_taichi
         data:

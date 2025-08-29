@@ -8,6 +8,8 @@ cards:
     title: 📍 Localisation & Langue
     show_header_toggle: false
     entities:
+      - entity: input_text.nabaztag_ip_address
+        name: Adresse IP du Nabaztag
       - entity: input_text.nabaztag_latitude
         name: Latitude (j)
         icon: mdi:latitude

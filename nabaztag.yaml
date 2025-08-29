@@ -1,6 +1,15 @@
 # =========================
 # Nabaztag - Variables
 # =========================
+sensor:
+  - platform: rest
+    name: Bitcoin Exchange Rate
+    resource: https://api.coinbase.com/v2/exchange-rates?currency=BTC
+    value_template: "{{ value_json.data.rates.EUR | float }}"
+    unit_of_measurement: "EUR"
+    scan_interval: 300
+    icon: mdi:currency-btc
+
 input_text:
   nabaztag_ip_address:
     name: "Adresse IP Nabaztag"
@@ -31,7 +40,7 @@ input_select:
 
   nabaztag_weather:
     name: "Météo"
-    options: ["soleil","nuages","brouillard","pluie","neige","orage"]
+    options: ["soleil","nuages","brouillard","pluie","neige","orage","auto"]
     initial: "soleil"
 
   nabaztag_traffic:
@@ -64,6 +73,16 @@ input_select:
       - "Asia/Tokyo"
     initial: "Europe/Paris"
 
+  # Bitcoin
+  nabaztag_stocks:
+    name: Stocks Display
+    options:
+      - "Off"
+      - "Bitcoin"
+      - "All"
+    initial: "Off"
+    icon: mdi:chart-line
+
 input_number:
   nabaztag_pollution:
     name: "Pollution"
@@ -88,11 +107,35 @@ input_number:
     step: 1
     initial: 23
 
+  # Bitcoin
+  bitcoin_previous_exchange_rate:
+    name: Previous Bitcoin Exchange Rate
+    initial: 0
+    min: 0
+    max: 500000
+    step: 0.01
+    mode: box
+    icon: mdi:currency-btc
+
+  bitcoin_value_difference:
+    name: Bitcoin Value Difference
+    initial: 0
+    min: -100000
+    max: 500000
+    step: 0.01
+    mode: box
+    icon: mdi:currency-btc
+
   # Configuration
 input_boolean:
   nabaztag_daylight_saving:
     name: "Heure d'été"
     initial: off
+
+  nabaztaglife:
+    name: "Nabaztag Life"
+    initial: on
+    icon: mdi:rabbit
 
 # =========================
 # Nabaztag - Scripts
@@ -138,11 +181,36 @@ script:
   nabaztag_set_weather:
     alias: "Nabaztag - Météo"
     sequence:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
       - action: rest_command.nabaztag_weather
         data:
           weather: >
             {% set w = states('input_select.nabaztag_weather') %}
-            {% if w == 'soleil' %}0{% elif w == 'nuages' %}1{% elif w == 'brouillard' %}2{% elif w == 'pluie' %}3{% elif w == 'neige' %}4{% elif w == 'orage' %}5{% endif %}
+            {% if w == 'soleil' %}
+              0
+            {% elif w == 'nuages' %}
+              1
+            {% elif w == 'brouillard' %}
+              2
+            {% elif w == 'pluie' %}
+              3
+            {% elif w == 'neige' %}
+              4
+            {% elif w == 'orage' %}
+              5
+            {% elif w == 'auto' %}
+              {% set current = states('weather.forecast_maison') %}
+              {% if current in ['sunny','clear'] %}0
+              {% elif current in ['cloudy','partlycloudy','overcast'] %}1
+              {% elif current == 'fog' %}2
+              {% elif current in ['rainy','pouring'] %}3
+              {% elif current in ['snowy','snowy-rainy'] %}4
+              {% elif current in ['lightning','lightning-rainy'] %}5
+              {% else %}1
+              {% endif %}
+            {% endif %}
 
   # Trafic
   nabaztag_set_traffic:
@@ -191,10 +259,10 @@ script:
     sequence:
       - action: rest_command.nabaztag_abort
 
-  nabaztag_comm:
+  nabaztag_communication:
     alias: "Nabaztag - Son Communication"
     sequence:
-      - action: rest_command.nabaztag_comm
+      - action: rest_command.nabaztag_communication
 
   nabaztag_ministop:
     alias: "Nabaztag - Son Ministop"
@@ -248,10 +316,70 @@ script:
     sequence:
       - action: rest_command.nabaztag_setup
 
+  # Réveil et endormissement
+  nabaztag_wake_up:
+    alias: "Nabaztag - Réveil"
+    sequence:
+      - action: rest_command.nabaztag_wakeup
+      - delay: "00:00:02"
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.nabaztaglife
+      - action: rest_command.nabaztag_taichi
+        data:
+          level: "255"
+      - delay: "00:00:03"
+      - action: rest_command.nabaztag_left_ear
+        data:
+          position: "8"
+      - action: rest_command.nabaztag_right_ear
+        data:
+          position: "8"
+      - delay: "00:00:01"
+      - action: rest_command.nabaztag_say
+        data:
+          message: "Bonjour ! Je me raiveille pour une nouvelle journer !"
+
+  nabaztag_go_to_sleep:
+    alias: "Nabaztag - Endormissement"
+    sequence:
+      - action: rest_command.nabaztag_say
+        data:
+          message: "Bonne soirer ! Je vais me reposer maintenant."
+      - delay: "00:00:03"
+      - action: rest_command.nabaztag_taichi
+        data:
+          level: "100"
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_left_ear
+        data:
+          position: "0"
+      - action: rest_command.nabaztag_right_ear
+        data:
+          position: "0"
+      - action: rest_command.nabaztag_nose
+        data:
+          state: "0"
+      - delay: "00:00:02"
+      - action: rest_command.nabaztag_sleep
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.nabaztaglife
+
 # =========================
 # Nabaztag - Rest Commands
 # =========================
 rest_command:
+  nabaztag_wakeup:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/wakeup"
+    method: get
+    timeout: 30
+
+  nabaztag_sleep:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/sleep"
+    method: get
+    timeout: 30
+
   nabaztag_say:
     url: "http://{{ states('input_text.nabaztag_ip_address') }}/say?t={{ message | urlencode }}"
     method: get
@@ -294,22 +422,22 @@ rest_command:
 
   # Sons
   nabaztag_ack:
-    url: "http://{{ states('input_text.nabaztag_ip_address') }}/sound/ack"
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/ack"
     method: get
     timeout: 10
 
   nabaztag_abort:
-    url: "http://{{ states('input_text.nabaztag_ip_address') }}/sound/abort"
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/abort"
     method: get
     timeout: 10
 
-  nabaztag_comm:
-    url: "http://{{ states('input_text.nabaztag_ip_address') }}/sound/comm"
+  nabaztag_communication:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/communication"
     method: get
     timeout: 10
 
   nabaztag_ministop:
-    url: "http://{{ states('input_text.nabaztag_ip_address') }}/sound/ministop"
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/ministop"
     method: get
     timeout: 10
 
@@ -325,3 +453,38 @@ rest_command:
       http://{{ states('input_text.nabaztag_ip_address') }}/setup?j={{ states('input_text.nabaztag_latitude') }}&k={{ states('input_text.nabaztag_longitude') }}&l={{ states('input_select.nabaztag_language') }}&c={{ states('input_select.nabaztag_timezone_city') }}&d={{ 1 if is_state('input_boolean.nabaztag_daylight_saving', 'on') else 0 }}&w={{ states('input_number.nabaztag_wake_hour') }}&b={{ states('input_number.nabaztag_sleep_hour') }}
     method: get
     timeout: 30
+
+  nabaztag_surprise:
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/surprise"
+    method: get
+    timeout: 10
+
+# =========================
+# Nabaztag - Automatisations
+# =========================
+automation:
+  # Réveil automatique - Utilise un trigger time_pattern pour vérifier l'heure
+  - id: nabaztag_auto_wakeup
+    alias: "Nabaztag - Réveil automatique"
+    trigger:
+      - trigger: time_pattern
+        minutes: 0
+        seconds: 0
+    condition:
+      - condition: template
+        value_template: "{{ now().hour == states('input_number.nabaztag_wake_hour') | int }}"
+    action:
+      - action: script.nabaztag_wake_up
+
+  # Endormissement automatique - Utilise un trigger time_pattern pour vérifier l'heure
+  - id: nabaztag_auto_sleep
+    alias: "Nabaztag - Endormissement automatique"
+    trigger:
+      - trigger: time_pattern
+        minutes: 0
+        seconds: 0
+    condition:
+      - condition: template
+        value_template: "{{ now().hour == states('input_number.nabaztag_sleep_hour') | int }}"
+    action:
+      - action: script.nabaztag_go_to_sleep
