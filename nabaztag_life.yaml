@@ -1,5 +1,5 @@
 # ==========================================
-# AUTOMATISATION NABAZTAG VIVANT - VERSION CORRIGÉE
+# AUTOMATISATION NABAZTAG VIVANT
 # Active de 8h à 17h avec actions aléatoires
 # ==========================================
     
@@ -9,11 +9,11 @@ automation:
     alias: "Nabaztag - Actions aléatoires ON"
     trigger:
       - trigger: time
-        at: "07:05:00"  # 5 min après le réveil existant
+        at: "07:05:00"
     condition:
       - condition: state
         entity_id: input_boolean.nabaztaglife
-        state: "on"  # Seulement si déjà réveillé
+        state: "on"
     action:
       - action: automation.turn_on
         target:
@@ -79,20 +79,11 @@ automation:
     condition:
       - condition: state
         entity_id: input_boolean.nabaztaglife
-        state: "on"  # Seulement si le Nabaztag est réveillé
+        state: "on"
     action:
       - action: rest_command.nabaztag_say
         data:
           message: "ses lheure du daisjeuner ! Bon appaittit a tous !"
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 1
-          nose_color: "red"
-      - delay: "00:00:03"
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 1
-          nose_color: "00FF00"  # Vert en hex
 
   # Retour de pause déjeuner (13h)
   - id: nabaztag_back_from_lunch
@@ -103,7 +94,7 @@ automation:
     condition:
       - condition: state
         entity_id: input_boolean.nabaztaglife
-        state: "on"  # Seulement si le Nabaztag est réveillé
+        state: "on"
     action:
       - action: rest_command.nabaztag_say
         data:
@@ -161,10 +152,6 @@ automation:
             {% else %}
               0
             {% endif %}
-
-# ==========================================
-# SCRIPTS PRINCIPAUX
-# ==========================================
 
 script:
   # Action aléatoire
@@ -225,10 +212,6 @@ script:
   nabaztag_tell_joke:
     alias: "Nabaztag - Raconter une blague"
     sequence:
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 1
-          nose_color: "FF8000"  # Orange en hex
       - action: rest_command.nabaztag_communication
       - delay: "00:00:01"
       - action: rest_command.nabaztag_say
@@ -246,11 +229,6 @@ script:
               "Pourquoi Mickey Mouse ? Parce que Mario Bros !"
             ] %}
             {{ jokes | random }}
-      - delay: "00:00:02"
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 1
-          nose_color: "00FF00"  # Vert en hex
 
 # Annoncer la météo (utilise weather.forecast_maison)
   nabaztag_announce_weather:
@@ -364,11 +342,6 @@ script:
               data:
                 position: "{{ range(0, 11) | random }}"
             - delay: "00:00:00.5"
-            - action: rest_command.nabaztag_nose
-              data:
-                state: 1
-                nose_color: "{{ ['FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', 'FF8000'] | random }}"
-            - delay: "00:00:00.5"
       - action: rest_command.nabaztag_left_ear
         data:
           position: 8
@@ -398,15 +371,6 @@ script:
                 value_template: "{{ sound_choice == 3 }}"
             sequence:
               - action: rest_command.nabaztag_ministop
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 1
-          nose_color: "{{ ['FF0000', 'FF8000', '00FF00'] | random }}"
-      - delay: "00:00:02"
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 1
-          nose_color: "00FF00"  # Vert en hex
 
   # Script de danse (utilise le script existant)
   nabaztag_dance:
@@ -426,15 +390,6 @@ script:
               data:
                 position: "{{ range(0, 11) | random }}"
             - delay: "00:00:00.5"
-            - action: rest_command.nabaztag_nose
-              data:
-                state: 1
-                nose_color: "{{ ['FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', 'FF8000'] | random }}"
-            - delay: "00:00:00.5"
-      - action: rest_command.nabaztag_nose
-        data:
-          state: 1
-          nose_color: "8000FF"  # Purple en hex
 
   # Action surprise
   nabaztag_surprise_action:
