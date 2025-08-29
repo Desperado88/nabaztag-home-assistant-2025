@@ -1,4 +1,3 @@
-# Carte lovelace de configuration du nabaztag
 type: vertical-stack
 cards:
   - type: markdown
@@ -79,4 +78,3 @@ cards:
       - **w** = {{ states('input_number.nabaztag_wake_hour') }} (Réveil)
 
       - **b** = {{ states('input_number.nabaztag_sleep_hour') }} (Coucher)
-

@@ -3,6 +3,44 @@
 # Active de 8h à 17h avec actions aléatoires
 # ==========================================
 
+sensor:
+  - platform: rest
+    name: Bitcoin Exchange Rate
+    resource: https://api.coinbase.com/v2/exchange-rates?currency=BTC
+    value_template: "{{ value_json.data.rates.EUR | float }}"
+    unit_of_measurement: "EUR"
+    scan_interval: 300
+    icon: mdi:currency-btc
+
+input_number:
+  bitcoin_previous_exchange_rate:
+    name: Previous Bitcoin Exchange Rate
+    initial: 0
+    min: 0
+    max: 500000
+    step: 0.01
+    mode: box
+    icon: mdi:currency-btc
+
+  bitcoin_value_difference:
+    name: Bitcoin Value Difference
+    initial: 0
+    min: -100000
+    max: 500000
+    step: 0.01
+    mode: box
+    icon: mdi:currency-btc
+
+input_select :
+  nabaztag_stocks:
+    name: Stocks Display
+    options:
+      - "Off"
+      - "Bitcoin"
+      - "All"
+    initial: "Off"
+    icon: mdi:chart-line
+
 # Automatisation principale - Démarrage à 8h
 automation:
   - id: nabaztag_start_day
@@ -80,12 +118,12 @@ automation:
       - action: rest_command.nabaztag_say
         data:
           message: "ses lheure du daisjeuner ! Bon appaittit a tous !"
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 1
           nose_color: "red"
       - delay: "00:00:03"
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 1
           nose_color: "00FF00"  # Vert en hex
@@ -102,6 +140,47 @@ automation:
           message: "Jespaire que vous avez bien manger ! On reprend !"
       - action: script.nabaztag_stretch
 
+  # Cours du Bitcoin (mise à jour toutes les heures pendant la journée)
+  - alias: "Nabaztag Bitcoin Update Auto"
+    id: nabaztag_bitcoin_update_auto
+    trigger:
+      - trigger: time_pattern
+        minutes: 0
+    condition:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: input_select.nabaztag_stocks
+            state: "Off"
+      - condition: time
+        after: "09:00:00"
+        before: "18:00:00"
+      - condition: template
+        value_template: >
+          {% set current = states('sensor.bitcoin_exchange_rate') | float %}
+          {% set previous = states('input_number.bitcoin_previous_exchange_rate') | float %}
+          {{ (current - previous) | abs > (previous * 0.05) }}
+    action:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.bitcoin_previous_exchange_rate
+        data:
+          value: "{{ states('sensor.bitcoin_exchange_rate') }}"
+      - action: rest_command.nabaztag_say
+        data:
+          message: >
+            {% set current = states('sensor.bitcoin_exchange_rate') | float %}
+            {% set previous = states('input_number.bitcoin_previous_exchange_rate') | float %}
+            {% set diff = current - previous %}
+            {% if diff > 0 %}
+              Excellente nouvelle ! Le Bitcoin a augmenter et vaut maintenant {{ current | round(0) }} euros.
+            {% else %}
+              Attention, le Bitcoin a baisser et vaut maintenant {{ current | round(0) }} euros.
+            {% endif %}
+
 # ==========================================
 # SCRIPTS PRINCIPAUX
 # ==========================================
@@ -117,17 +196,17 @@ script:
         data:
           speed: 500
       - delay: "00:00:03"
-      - action: rest_command.nabaztag_move_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: 8
-      - action: rest_command.nabaztag_move_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: 8
       - delay: "00:00:01"
       - action: rest_command.nabaztag_say
         data:
           message: "Bonjour ! Je me raiveille pour une nouvelle journer !"
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 1
           nose_color: "00FF00"  # Vert en hex
@@ -144,13 +223,13 @@ script:
         data:
           speed: 100
       - delay: "00:00:02"
-      - action: rest_command.nabaztag_move_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: 0
-      - action: rest_command.nabaztag_move_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: 0
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 0
           nose_color: "000000"  # Off en hex
@@ -162,7 +241,7 @@ script:
     alias: "Nabaztag - Action aléatoire"
     sequence:
       - variables:
-          action_type: "{{ range(1, 8) | random }}"
+          action_type: "{{ range(1, 9) | random }}"
       - choose:
           - conditions:
               - condition: template
@@ -199,12 +278,23 @@ script:
                 value_template: "{{ action_type == 7 }}"
             sequence:
               - action: script.nabaztag_random_sound
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 8 }}"
+            sequence:
+              - action: script.nabaztag_surprise_action
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 9 }}"
+            sequence:
+              - action: script.nabaztag_daily_info
+
 
   # Dire une blague
   nabaztag_tell_joke:
     alias: "Nabaztag - Raconter une blague"
     sequence:
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 1
           nose_color: "FF8000"  # Orange en hex
@@ -226,31 +316,60 @@ script:
             ] %}
             {{ jokes | random }}
       - delay: "00:00:02"
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 1
           nose_color: "00FF00"  # Vert en hex
 
-  # Annoncer la météo
+  # Annoncer la météo (utilise weather.forecast_maison)
   nabaztag_announce_weather:
     alias: "Nabaztag - Annoncer la météo"
     sequence:
+      - variables:
+          meteo: "{{ states('weather.forecast_maison') }}"
+          temperature: "{{ state_attr('weather.forecast_maison', 'temperature') }}"
       - action: rest_command.nabaztag_set_weather
         data:
-          weather: "{{ ['sun', 'clouds', 'rain'] | random }}"
-          weather_icon: "{{ ['sun', 'clouds', 'rain'] | random }}"
+          weather: >
+            {% if meteo == "sunny" %}
+              sun
+            {% elif meteo in ["partlycloudy", "cloudy"] %}
+              clouds
+            {% elif meteo in ["rainy", "pouring"] %}
+              rain
+            {% elif meteo in ["snowy", "snowy-rainy"] %}
+              snow
+            {% else %}
+              clouds
+            {% endif %}
+          weather_icon: >
+            {% if meteo == "sunny" %}
+              sun
+            {% elif meteo in ["partlycloudy", "cloudy"] %}
+              clouds
+            {% elif meteo in ["rainy", "pouring"] %}
+              rain
+            {% elif meteo in ["snowy", "snowy-rainy"] %}
+              snow
+            {% else %}
+              clouds
+            {% endif %}
       - delay: "00:00:02"
       - action: rest_command.nabaztag_say
         data_template:
           message: >
-            {% set weather_messages = [
-              "Il fait beau aujourdhui ! Parfait pour sortir !",
-              "Le temps est nuageux mais agrer-able !",
-              "Il pleut un peu noubliez pas votre parapluie !",
-              "Quelle belle journer pour une promenade !",
-              "Le ciel est dais-gager profitez-en bien !"
-            ] %}
-            {{ weather_messages | random }}
+            {% if meteo == "sunny" %}
+              Il fait beau aujourd'hui avec {{ temperature }} degrer !
+            {% elif meteo in ["partlycloudy", "cloudy"] %}
+              Le temps est nuageux avec {{ temperature }} degrer.
+            {% elif meteo in ["rainy", "pouring"] %}
+              Il pleut, prevoyez un parapluie ! Temperature : {{ temperature }} daigrai.
+            {% elif meteo in ["snowy", "snowy-rainy"] %}
+              Il neige dehors ! Temperature : {{ temperature }} daigrai.
+            {% else %}
+              La meteo actuelle est {{ meteo }} avec {{ temperature }} daigrai.
+            {% endif %}
+
 
   # Annoncer l'heure
   nabaztag_announce_time:
@@ -272,11 +391,11 @@ script:
       - delay: "00:00:02"
       - action: rest_command.nabaztag_taichi
         data:
-          speed: 1000
+          speed: 255
       - delay: "00:00:05"
       - action: rest_command.nabaztag_taichi
         data:
-          speed: 500
+          speed: 1000
 
   # Bâillement
   nabaztag_yawn:
@@ -285,24 +404,24 @@ script:
       - action: rest_command.nabaztag_say
         data_template:
           message: "{{ ['Haaaaa petit baillement !', 'Je suis un peu fatiguer', 'Hooooo excusez-moi'] | random }}"
-      - action: rest_command.nabaztag_move_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: 0
-      - action: rest_command.nabaztag_move_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: 0
       - delay: "00:00:02"
-      - action: rest_command.nabaztag_move_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: 16
-      - action: rest_command.nabaztag_move_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: 16
       - delay: "00:00:01"
-      - action: rest_command.nabaztag_move_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: 8
-      - action: rest_command.nabaztag_move_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: 8
 
@@ -314,22 +433,22 @@ script:
       - repeat:
           count: 3
           sequence:
-            - action: rest_command.nabaztag_move_left_ear
+            - action: rest_command.nabaztag_left_ear
               data:
                 position: "{{ range(0, 11) | random }}"
-            - action: rest_command.nabaztag_move_right_ear
+            - action: rest_command.nabaztag_right_ear
               data:
                 position: "{{ range(0, 11) | random }}"
             - delay: "00:00:00.5"
-            - action: rest_command.nabaztag_set_nose
+            - action: rest_command.nabaztag_nose
               data:
                 state: 1
                 nose_color: "{{ ['FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', 'FF8000'] | random }}"
             - delay: "00:00:00.5"
-      - action: rest_command.nabaztag_move_left_ear
+      - action: rest_command.nabaztag_left_ear
         data:
           position: 8
-      - action: rest_command.nabaztag_move_right_ear
+      - action: rest_command.nabaztag_right_ear
         data:
           position: 8
 
@@ -355,12 +474,12 @@ script:
                 value_template: "{{ sound_choice == 3 }}"
             sequence:
               - action: rest_command.nabaztag_ministop
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 1
           nose_color: "{{ ['FF0000', 'FF8000', '00FF00'] | random }}"
       - delay: "00:00:02"
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 1
           nose_color: "00FF00"  # Vert en hex
@@ -376,19 +495,19 @@ script:
       - repeat:
           count: 3
           sequence:
-            - action: rest_command.nabaztag_move_left_ear
+            - action: rest_command.nabaztag_left_ear
               data:
                 position: "{{ range(0, 11) | random }}"
-            - action: rest_command.nabaztag_move_right_ear
+            - action: rest_command.nabaztag_right_ear
               data:
                 position: "{{ range(0, 11) | random }}"
             - delay: "00:00:00.5"
-            - action: rest_command.nabaztag_set_nose
+            - action: rest_command.nabaztag_nose
               data:
                 state: 1
                 nose_color: "{{ ['FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', 'FF8000'] | random }}"
             - delay: "00:00:00.5"
-      - action: rest_command.nabaztag_set_nose
+      - action: rest_command.nabaztag_nose
         data:
           state: 1
           nose_color: "8000FF"  # Purple en hex
@@ -401,3 +520,17 @@ script:
         target:
           entity_id: script.nabaztag_dance
       - action: rest_command.nabaztag_surprise
+
+  nabaztag_daily_info:
+    alias: Daily Information Summary
+    sequence:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
+      - action: rest_command.nabaztag_say
+        data:
+          message: >
+            Bonjour ! Voici les informations du jour.
+            La meteo est {{ states('weather.home') }}.
+            Le Bitcoin vaut {{ states('sensor.bitcoin_exchange_rate') }} euros.
+            Bonne journee !

@@ -1,30 +1,22 @@
 type: vertical-stack
 cards:
   - type: entities
-    title: 🐰 Nabaztag — Réglages
+    title: 🎭 Nabaztag - Contrôle
     entities:
+      - entity: input_text.nabaztag_ip_address
+        name: Adresse IP du Nabaztag
       - entity: input_select.nabaztag_ear_position
         name: Position des oreilles
       - entity: input_select.nabaztag_nose_state
         name: État du nez
       - entity: input_select.nabaztag_weather
         name: Météo
-      - entity: input_text.nabaztag_message
-        name: Message à dire
-  - type: horizontal-stack
-    cards:
-      - type: button
-        name: Vie
-        icon: mdi:carrot
-        entity: switch.nabaztaglife
-        tap_action:
-          action: toggle
-      - type: button
-        name: Tai Chi
-        icon: mdi:meditation
-        entity: switch.nabaztag_taichi
-        tap_action:
-          action: toggle
+      - entity: input_select.nabaztag_traffic
+        name: Trafic
+      - entity: input_select.nabaztag_stock
+        name: Bourse
+      - entity: input_number.nabaztag_pollution
+        name: Pollution
   - type: horizontal-stack
     cards:
       - show_name: true
@@ -35,110 +27,137 @@ cards:
         tap_action:
           action: call-service
           service: script.nabaztag_move_left_ear
-        entity: script.nabaztag_move_left_ear
-      - type: button
+      - show_name: true
+        show_icon: true
+        type: button
         name: Oreille droite
         icon: mdi:arrow-right-bold
         tap_action:
           action: call-service
           service: script.nabaztag_move_right_ear
-        entity: script.nabaztag_move_right_ear
-      - type: button
+      - show_name: true
+        show_icon: true
+        type: button
         name: Les deux
         icon: mdi:sync
         tap_action:
           action: call-service
           service: script.nabaztag_move_both_ears
-        entity: script.nabaztag_move_both_ears
   - type: horizontal-stack
     cards:
+      - show_name: true
+        show_icon: true
+        type: button
+        name: Danse
+        icon: mdi:music-note
+        tap_action:
+          action: call-service
+          service: script.nabaztag_dance
+        entity: script.nabaztag_ear_dance
       - type: button
         name: Nez
         icon: mdi:led-on
-        entity: switch.nabaztag_nose
         tap_action:
           action: call-service
-          service: switch.toggle
-          target:
-            entity_id: switch.nabaztag_nose
+          service: script.nabaztag_set_nose
       - type: button
         name: Météo
         icon: mdi:weather-partly-cloudy
         tap_action:
           action: call-service
           service: script.nabaztag_set_weather
-        entity: input_select.nabaztag_weather
-      - type: button
-        name: Danse
-        icon: mdi:music-note
-        tap_action:
-          action: call-service
-          service: script.nabaztag_dance
-        entity: script.nabaztag_dance
   - type: horizontal-stack
     cards:
       - type: button
-        name: Surprise
-        icon: mdi:gesture-tap
+        name: Trafic
+        icon: mdi:traffic-light
         tap_action:
           action: call-service
-          service: rest_command.nabaztag_surprise
+          service: script.nabaztag_set_traffic
       - type: button
-        name: Comm.
-        icon: mdi:message-text
+        name: Pollution
+        icon: mdi:factory
         tap_action:
           action: call-service
-          service: rest_command.nabaztag_communication
+          service: script.nabaztag_set_pollution
+      - type: button
+        name: Bourse
+        icon: mdi:chart-line
+        tap_action:
+          action: call-service
+          service: script.nabaztag_set_stock
+  - type: horizontal-stack
+    cards:
       - type: button
         name: Ack
-        icon: mdi:check-decagram
+        icon: mdi:check-bold
         tap_action:
           action: call-service
           service: rest_command.nabaztag_ack
+      - type: button
+        name: Abort
+        icon: mdi:close-circle
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_abort
+      - type: button
+        name: Communication
+        icon: mdi:message-alert
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_comm
+      - type: button
+        name: MiniStop
+        icon: mdi:stop-circle
+        tap_action:
+          action: call-service
+          service: rest_command.nabaztag_ministop
   - type: horizontal-stack
     cards:
-      - type: button
-        name: Réveil
-        icon: mdi:alarm
+      - show_name: true
+        show_icon: true
+        type: button
+        name: Taichi Stop
+        icon: mdi:power
         tap_action:
           action: call-service
-          service: script.nabaztag_wakeup
-      - type: button
-        name: Dodo
-        icon: mdi:sleep
+          service: script.nabaztag_taichi_stop
+          service_data:
+            level: "0"
+      - show_name: true
+        show_icon: true
+        type: button
+        name: Taichi Min
+        icon: mdi:arrow-down
         tap_action:
           action: call-service
-          service: script.nabaztag_sleep
+          service: script.nabaztag_taichi_min
+          service_data:
+            level: "40"
       - type: button
-        name: Stop
-        icon: mdi:stop
+        name: Taichi Moyen
+        icon: mdi:arrow-right-bold
         tap_action:
           action: call-service
-          service: script.nabaztag_stop
-  - type: horizontal-stack
-    cards:
+          service: script.nabaztag_taichi_medium
+          service_data:
+            level: "80"
       - type: button
-        name: Update
-        icon: mdi:update
+        name: Taichi Max
+        icon: mdi:arrow-up-bold
         tap_action:
           action: call-service
-          service: rest_command.nabaztag_update
-      - type: button
-        name: Reboot
-        icon: mdi:restart
-        tap_action:
-          action: call-service
-          service: rest_command.nabaztag_reboot
-      - type: button
-        name: Clear
-        icon: mdi:broom
-        tap_action:
-          action: call-service
-          service: rest_command.nabaztag_clear
+          service: script.nabaztag_taichi_max
+          service_data:
+            level: "255"
+  - type: entities
+    title: 🗣️ Nabaztag - Parole
+    entities:
+      - entity: input_text.nabaztag_message
+        name: Message à dire
   - type: button
     name: Faire parler
     icon: mdi:chat
     tap_action:
       action: call-service
       service: script.nabaztag_talk
-    entity: script.nabaztag_talk
