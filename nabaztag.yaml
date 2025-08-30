@@ -13,7 +13,7 @@ sensor:
 input_text:
   nabaztag_ip_address:
     name: "Adresse IP Nabaztag"
-    initial: "192.168.0.13"
+    initial: "192.168.1.107"
 
   nabaztag_message:
     name: "Message à dire"
@@ -366,6 +366,15 @@ script:
         target:
           entity_id: input_boolean.nabaztaglife
 
+  nabaztag_random_surprise:
+    alias: "Nabaztag - Surprise aléatoire"
+    sequence:
+      - variables:
+          random_mood: "{{ range(1, 306) | random }}"
+      - action: rest_command.nabaztag_surprise
+        data:
+          moods: "{{ random_mood }}"
+          
 # =========================
 # Nabaztag - Rest Commands
 # =========================
@@ -447,15 +456,29 @@ rest_command:
     method: get
     timeout: 10
 
-  # Configuration
+# Configuration
   nabaztag_setup:
     url: >-
-      http://{{ states('input_text.nabaztag_ip_address') }}/setup?j={{ states('input_text.nabaztag_latitude') }}&k={{ states('input_text.nabaztag_longitude') }}&l={{ states('input_select.nabaztag_language') }}&c={{ states('input_select.nabaztag_timezone_city') }}&d={{ 1 if is_state('input_boolean.nabaztag_daylight_saving', 'on') else 0 }}&w={{ states('input_number.nabaztag_wake_hour') }}&b={{ states('input_number.nabaztag_sleep_hour') }}
+      http://{{ states('input_text.nabaztag_ip_address') }}/setup
+      ?j={{ states('input_text.nabaztag_latitude') }}
+      &k={{ states('input_text.nabaztag_longitude') }}
+      &l={{ states('input_select.nabaztag_language') }}
+      &c={{
+        {
+          "Paris": "PAR",
+          "Londres": "LON",
+          "New York": "NYC",
+          "Tokyo": "TYO"
+        }[states('input_select.nabaztag_timezone_city')]|default("PAR")
+      }}
+      &d={{ 1 if is_state('input_boolean.nabaztag_daylight_saving', 'on') else 0 }}
+      &w={{ states('input_number.nabaztag_wake_hour') }}
+      &b={{ states('input_number.nabaztag_sleep_hour') }}
     method: get
     timeout: 30
 
   nabaztag_surprise:
-    url: "http://{{ states('input_text.nabaztag_ip_address') }}/surprise"
+    url: "http://{{ states('input_text.nabaztag_ip_address') }}/surprise?v={{ moods }}"
     method: get
     timeout: 10
 
