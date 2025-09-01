@@ -516,3 +516,18 @@ automation:
         value_template: "{{ now().hour == states('input_number.nabaztag_sleep_hour') | int }}"
     action:
       - action: script.nabaztag_go_to_sleep
+
+  # Mettre à jour la météo
+  - id: nabaztag_auto_weather_update
+    alias: "Nabaztag - Mise à jour météo automatique"
+    trigger:
+      - trigger: time_pattern
+        minutes: "0"  # Toutes les heures
+    condition:
+      - condition: state
+        entity_id: input_boolean.nabaztaglife
+        state: "on"
+      - condition: template
+        value_template: "{{ states('input_select.nabaztag_weather') == 'auto' }}"
+    action:
+      - action: script.nabaztag_set_weather

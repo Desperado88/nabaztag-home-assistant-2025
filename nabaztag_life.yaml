@@ -165,7 +165,7 @@ script:
               - condition: template
                 value_template: "{{ action_type == 1 }}"
             sequence:
-              - action: script.nabaztag_tell_joke
+              - action: script.nabaztag_tell_joke # Raconter une blague
           - conditions:
               - condition: template
                 value_template: "{{ action_type == 2 }}"
@@ -180,12 +180,12 @@ script:
               - condition: template
                 value_template: "{{ action_type == 4 }}"
             sequence:
-              - action: script.nabaztag_stretch
+              - action: script.nabaztag_stretch # Etirement
           - conditions:
               - condition: template
                 value_template: "{{ action_type == 5 }}"
             sequence:
-              - action: script.nabaztag_yawn
+              - action: script.nabaztag_yawn # Bâiller
           - conditions:
               - condition: template
                 value_template: "{{ action_type == 6 }}"
@@ -195,17 +195,17 @@ script:
               - condition: template
                 value_template: "{{ action_type == 7 }}"
             sequence:
-              - action: script.nabaztag_random_sound
+              - action: script.nabaztag_random_sound # Son aléatoire
           - conditions:
               - condition: template
                 value_template: "{{ action_type == 8 }}"
             sequence:
-              - action: script.nabaztag_surprise_action
+              - action: script.nabaztag_surprise_action # Phrases aléatoires
           - conditions:
               - condition: template
                 value_template: "{{ action_type == 9 }}"
             sequence:
-              - action: script.nabaztag_bitcoin_info
+              - action: script.nabaztag_bitcoin_info # Bitcoin value
 
 
   # Dire une blague
