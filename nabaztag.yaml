@@ -315,6 +315,11 @@ script:
     alias: "Nabaztag - Appliquer Setup"
     sequence:
       - action: rest_command.nabaztag_setup
+      - action: persistent_notification.create
+        metadata: {}
+        data:
+          message: Configuration envoyée avec succès
+
 
   # Réveil et endormissement
   nabaztag_wake_up:
