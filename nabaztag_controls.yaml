@@ -5,7 +5,7 @@
 input_text:
   nabaztag_ip_address:
     name: "Adresse IP Nabaztag"
-    initial: "192.168.0.13"
+    initial: !secret nabaztag_ip
 
   nabaztag_message:
     name: "Message à dire"
