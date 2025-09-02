@@ -237,6 +237,22 @@ script:
       - variables:
           meteo: "{{ states('weather.forecast_maison') }}"
           temperature: "{{ state_attr('weather.forecast_maison', 'temperature') }}"
+          ear_position: >
+            {% if meteo in ["sunny", "clear"] %}
+              0
+            {% elif meteo in ["partlycloudy", "cloudy", "overcast"] %}
+              4
+            {% elif meteo == "fog" %}
+              6
+            {% elif meteo in ["rainy", "pouring"] %}
+              8
+            {% elif meteo in ["snowy", "snowy-rainy"] %}
+              7
+            {% elif meteo in ["lightning", "lightning-rainy"] %}
+              5
+            {% else %}
+              4
+            {% endif %}
       - action: rest_command.nabaztag_weather
         data:
           weather: >
@@ -255,6 +271,12 @@ script:
             {% else %}
               1
             {% endif %}
+      - action: rest_command.nabaztag_left_ear
+        data:
+          position: "{{ ear_position }}"
+      - action: rest_command.nabaztag_right_ear
+        data:
+          position: "{{ ear_position }}"
       - delay: "00:00:02"
       - action: rest_command.nabaztag_say
         data:
