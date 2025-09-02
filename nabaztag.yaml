@@ -41,7 +41,7 @@ input_select:
   nabaztag_weather:
     name: "Météo"
     options: ["soleil","nuages","brouillard","pluie","neige","orage","auto"]
-    initial: "soleil"
+    initial: "auto"
 
   nabaztag_traffic:
     name: "Trafic"
