@@ -13,7 +13,7 @@ sensor:
 input_text:
   nabaztag_ip_address:
     name: "Adresse IP Nabaztag"
-    initial: "192.168.1.107"
+    initial: !secret nabaztag_ip
 
   nabaztag_message:
     name: "Message à dire"
@@ -22,10 +22,10 @@ input_text:
   # Configuration
   nabaztag_latitude:
     name: "Latitude"
-    initial: "48.8566"   # Exemple Paris
+    initial: !secret latitude
   nabaztag_longitude:
     name: "Longitude"
-    initial: "2.3522"    # Exemple Paris
+    initial: !secret longitude
 
 input_select:
   nabaztag_ear_position:
