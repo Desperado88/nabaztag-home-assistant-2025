@@ -34,14 +34,16 @@ GitHub source :
   https://github.com/andreax79/ServerlessNabaztag/tree/main
 
 Un firmware permettant de contrôler le Nabaztag/tag directement via le web, sans serveur externe - andreax79/ServerlessNabaztag
-N'oubliez pas que vous pouvez utiliser votre Raspberry Pi comme hôte pour ces fichiers de firmware (créez simplement un dossier nommé "www" dans le dossier config et placez-y le répertoire "vl").
+N'oubliez pas que vous pouvez utiliser votre Raspberry Pi comme hôte pour ces fichiers de firmware (créez simplement un dossier nommé "www" dans le dossier "config" et placez-y le répertoire "vl" ex : /config/www/vl/ ).
 Après l'installation de ce nouveau firmware, il sera possible de contrôler le lapin via l'interface utilisateur de Home Assistant :
 ![FireShot Capture 4 - Home Assistant - https___maxhassio duckdns org_states_group tab_nabaztag](https://github.com/user-attachments/assets/76396d13-a4cb-4041-aa77-7e3cd82eb915)
 
-Si vous ne savez pas comment utiliser un package, consultez ici : https://home-assistant.io/docs/configuration/packages/ ou créez simplement un répertoire nommé "packages" à l'intérieur du dossier "config", placez-y le fichier et ajoutez cette ligne au fichier configuration.yaml :
+Si vous ne savez pas comment utiliser un package, consultez ici : https://home-assistant.io/docs/configuration/packages/ ou créez simplement un répertoire nommé "packages" à l'intérieur du dossier "config", placez-y le fichier "nabaztag.yaml" (et si besoin nabaztag_life.yaml) et ajoutez cette ligne au fichier configuration.yaml :
 
 homeassistant:
   packages: !include_dir_named packages
+
+(ex de config : /config/packages/nabaztag.yaml et nabaztag_life.yaml)
 
 Changer la plateforme violette dans les paramètres de Nabaztag avec :
 [votre-hassio-ip]:8123/local/vl/
