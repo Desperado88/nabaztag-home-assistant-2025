@@ -1,3 +1,84 @@
+# Fichiers de configuration Home Assistant
+!example.yaml
+!carte_lovelace.yaml
+!openkartoz.yaml
+!rfid.yaml
+
+# Fichiers sensibles
+secrets.yaml
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.cer
+*.der
+*.p7b
+*.p7c
+*.p7s
+*.p8
+*.p10
+*.p12
+*.pfx
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.p7b
+*.p7c
+*.p7s
+*.p8
+*.p10
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+._*
+
+# Fichiers de logs
+*.log
+logs/
+log/
+
+# Fichiers temporaires
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Fichiers d'environnement
+.env
+.env.*
+!.env.example
+
+# Fichiers de dépendances
+node_modules/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Fichiers spécifiques au projet
 .DS_Store
 
-secrets.yaml
